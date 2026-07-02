@@ -305,6 +305,44 @@
     color: var(--texto-suave);
   }
 
+  .eventoProximo { cursor: pointer; align-items: flex-start; flex-wrap: wrap; }
+  .eventoProximo .filaPrincipalEvento { display: flex; align-items: center; gap: 10px; width: 100%; }
+  .eventoProximo .detalleEvento {
+    display: none;
+    width: 100%;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--gris-linea);
+    font-size: 12px;
+    color: var(--texto-suave);
+    white-space: pre-line;
+  }
+  .eventoProximo.expandido .detalleEvento { display: block; }
+
+  .filtrosEventos {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+
+  .chipFiltro {
+    background: var(--gris-fondo);
+    border: 1.5px solid transparent;
+    color: var(--texto-suave);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .chipFiltro.activo {
+    background: var(--vino-chankas);
+    color: white;
+  }
+
   /* ---------- PANEL DE CARGA POR PERSONA ---------- */
   .panelCarga {
     background: var(--blanco);
@@ -617,8 +655,8 @@
   .panelResumen {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin-bottom: 20px;
+    gap: 8px;
+    margin-bottom: 8px;
   }
 
   @media (max-width: 700px) {
@@ -628,21 +666,25 @@
   .fichaResumen {
     background: var(--blanco);
     border: 1.5px solid var(--gris-linea);
-    border-radius: var(--radio);
-    padding: 14px 16px;
+    border-radius: 8px;
+    padding: 8px 12px;
     display: flex;
-    flex-direction: column;
-    gap: 4px;
+    align-items: baseline;
+    gap: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s;
   }
 
+  .fichaResumen:hover { border-color: var(--vino-chankas); }
+
   .fichaResumen .numeroResumen {
-    font-size: 26px;
+    font-size: 18px;
     font-weight: 800;
     color: var(--vino-chankas);
   }
 
   .fichaResumen .etiquetaResumen {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--texto-suave);
   }
 
@@ -691,34 +733,49 @@
 
   <main>
     <div class="panelResumen" id="panelResumen">
-      <div class="fichaResumen">
+      <div class="fichaResumen" onclick="aplicarFiltroResumen('completadasSemana')">
         <span class="numeroResumen" id="resumenCompletadasSemana">0</span>
         <span class="etiquetaResumen">Completadas esta semana</span>
       </div>
-      <div class="fichaResumen">
+      <div class="fichaResumen" onclick="aplicarFiltroResumen('pendientes')">
         <span class="numeroResumen" id="resumenPendientes">0</span>
         <span class="etiquetaResumen">Pendientes totales</span>
       </div>
-      <div class="fichaResumen resumenAlerta" id="fichaVencidas">
+      <div class="fichaResumen resumenAlerta" id="fichaVencidas" onclick="aplicarFiltroResumen('vencidas')">
         <span class="numeroResumen" id="resumenVencidas">0</span>
         <span class="etiquetaResumen">Vencidas</span>
       </div>
-      <div class="fichaResumen resumenAviso" id="fichaPorVencer">
+      <div class="fichaResumen resumenAviso" id="fichaPorVencer" onclick="aplicarFiltroResumen('porVencer')">
         <span class="numeroResumen" id="resumenPorVencer">0</span>
         <span class="etiquetaResumen">Vencen en 3 días</span>
       </div>
+    </div>
+    <div id="avisoFiltroResumen" style="display:none; margin:-14px 0 16px; font-size:12px;">
+      <span style="background:var(--vino-chankas); color:white; padding:4px 10px; border-radius:20px; cursor:pointer;" onclick="aplicarFiltroResumen(null)">Filtrando: <span id="textoFiltroResumen"></span> — clic para quitar ✕</span>
     </div>
 
     <div class="panelCalendario">
       <div class="panelCalendarioHeader">
         <h3>📅 Próximos 7 días</h3>
-        <div class="leyendaCalendario">
-          <span><i class="puntoLeyenda" style="background:#d64545"></i> Alta</span>
-          <span><i class="puntoLeyenda" style="background:#e0a400"></i> Media</span>
-          <span><i class="puntoLeyenda" style="background:#94a3b8"></i> Baja</span>
-          <span><i class="puntoLeyenda" style="background:#1a7a3e"></i> Fecha importante</span>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <div class="leyendaCalendario">
+            <span><i class="puntoLeyenda" style="background:#d64545"></i> Alta</span>
+            <span><i class="puntoLeyenda" style="background:#e0a400"></i> Media</span>
+            <span><i class="puntoLeyenda" style="background:#94a3b8"></i> Baja</span>
+            <span><i class="puntoLeyenda" style="background:#1a7a3e"></i> Fecha importante</span>
+          </div>
         </div>
       </div>
+
+      <div class="filtrosEventos">
+        <button type="button" class="chipFiltro activo" data-filtro="todos" onclick="cambiarFiltroEventos('todos')">Todos</button>
+        <button type="button" class="chipFiltro" data-filtro="tarea" onclick="cambiarFiltroEventos('tarea')">📋 Tareas</button>
+        <button type="button" class="chipFiltro" data-filtro="fecha" onclick="cambiarFiltroEventos('fecha')">🎉 Fechas importantes</button>
+        <div style="flex:1;"></div>
+        <button type="button" class="btnSecundario" style="width:auto; padding:7px 12px; font-size:12px;" onclick="abrirModalFechaImportante()">+ Fecha importante</button>
+        <button type="button" class="btnSecundario" style="width:auto; padding:7px 12px; font-size:12px;" onclick="abrirCalendarioCompleto()">🗓 Ver mes completo</button>
+      </div>
+
       <div id="listaProximosEventos" class="listaProximosEventos">
         <div class="vacioColumna">Cargando eventos...</div>
       </div>
@@ -883,6 +940,44 @@
     <div class="accionesModal">
       <button class="btnSecundario" onclick="cerrarModalCambiarPassword()">Cancelar</button>
       <button class="btnPrimario" onclick="confirmarCambiarPassword()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL CALENDARIO COMPLETO ===================== -->
+<div class="overlay" id="overlayCalendarioCompleto">
+  <div class="modal" style="max-width:900px; padding:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <h3 style="margin:0;">🗓 Calendario completo</h3>
+      <button class="btnSecundario" style="width:auto; padding:6px 12px;" onclick="cerrarCalendarioCompleto()">Cerrar ✕</button>
+    </div>
+    <div id="contenedorIframeCalendario" style="width:100%; height:70vh;"></div>
+  </div>
+</div>
+
+<!-- ===================== MODAL AGREGAR FECHA IMPORTANTE ===================== -->
+<div class="overlay" id="overlayFechaImportante">
+  <div class="modal" style="max-width:420px;">
+    <h3>Agregar fecha importante</h3>
+    <div class="campo">
+      <label>Título</label>
+      <input type="text" id="fechaImportanteTitulo" placeholder="ej. Aniversario del club">
+    </div>
+    <div class="campo">
+      <label>Descripción (opcional)</label>
+      <textarea id="fechaImportanteDescripcion" placeholder="Detalles adicionales"></textarea>
+    </div>
+    <div class="campo">
+      <label>Fecha</label>
+      <input type="date" id="fechaImportanteFecha">
+    </div>
+    <div class="campo" style="display:flex; align-items:center; gap:8px;">
+      <input type="checkbox" id="fechaImportanteRecurrente" style="width:auto;" checked>
+      <label style="margin:0;">Se repite cada año</label>
+    </div>
+    <div class="accionesModal">
+      <button class="btnSecundario" onclick="cerrarModalFechaImportante()">Cancelar</button>
+      <button class="btnPrimario" onclick="guardarFechaImportante()">Guardar</button>
     </div>
   </div>
 </div>
@@ -1181,8 +1276,37 @@ function pintarKanban() {
   const listasPorEstado = { pendiente: [], en_proceso: [], completada: [] };
   const filtroUsuarioId = document.getElementById('filtroUsuario')?.value || '';
 
+  const hoyInicio = new Date();
+  hoyInicio.setHours(0, 0, 0, 0);
+  const diaSemana = hoyInicio.getDay();
+  const diffALunes = diaSemana === 0 ? 6 : diaSemana - 1;
+  const inicioSemana = new Date(hoyInicio);
+  inicioSemana.setDate(hoyInicio.getDate() - diffALunes);
+
+  function pasaFiltroResumen(t) {
+    if (!filtroResumenActivo) return true;
+    if (filtroResumenActivo === 'pendientes') return t.estado !== 'completada';
+    if (filtroResumenActivo === 'completadasSemana') {
+      if (t.estado !== 'completada' || !t.fechaCompletada) return false;
+      const fc = t.fechaCompletada.toDate ? t.fechaCompletada.toDate() : new Date(t.fechaCompletada);
+      return fc >= inicioSemana;
+    }
+    if (filtroResumenActivo === 'vencidas') {
+      if (t.estado === 'completada' || !t.fechaLimite) return false;
+      const dias = diasHastaVencer(t.fechaLimite);
+      return dias !== null && dias < 0;
+    }
+    if (filtroResumenActivo === 'porVencer') {
+      if (t.estado === 'completada' || !t.fechaLimite) return false;
+      const dias = diasHastaVencer(t.fechaLimite);
+      return dias !== null && dias >= 0 && dias <= 3;
+    }
+    return true;
+  }
+
   Object.values(tareasCache).forEach(t => {
     if (filtroUsuarioId && t.asignadoA !== filtroUsuarioId) return;
+    if (!pasaFiltroResumen(t)) return;
     if (listasPorEstado[t.estado]) listasPorEstado[t.estado].push(t);
   });
 
@@ -1640,13 +1764,37 @@ async function crearUsuario() {
     return;
   }
 
-  const { collection, getDocs, query, where, addDoc, serverTimestamp } = window._fs;
+  const { collection, doc, getDocs, query, where, addDoc, updateDoc, serverTimestamp } = window._fs;
 
-  // Verificar que el login no exista ya
+  // Verificar si el login ya existe (activo o desactivado)
   const q = query(collection(window._db, 'usuarios'), where('usuario', '==', login));
   const existentes = await getDocs(q);
+
   if (!existentes.empty) {
-    alert('Ese nombre de usuario ya existe, elige otro.');
+    const docExistente = existentes.docs[0];
+    const datosExistente = docExistente.data();
+
+    if (datosExistente.activo === false) {
+      // Es un usuario desactivado con el mismo login: ofrecemos reactivarlo
+      const confirmar = confirm(`Ya existe un usuario "${login}" desactivado. ¿Quieres reactivarlo con estos nuevos datos?`);
+      if (!confirmar) return;
+
+      const contrasenaHash = await generarHashSHA256(password);
+      await updateDoc(doc(window._db, 'usuarios', docExistente.id), {
+        nombre,
+        contrasenaHash,
+        rol,
+        color,
+        activo: true
+      });
+      await cargarUsuarios();
+      pintarListaUsuariosAdmin();
+      cerrarFormularioNuevoUsuario();
+      alert(`Usuario "${nombre}" reactivado. Comparte con él su usuario (${login}) y contraseña.`);
+      return;
+    }
+
+    alert('Ese nombre de usuario ya existe y está activo, elige otro.');
     return;
   }
 
@@ -1755,9 +1903,11 @@ async function obtenerEventosDeCalendario(calendarId, tipo) {
     const datos = await respuesta.json();
     return (datos.items || []).map(evento => ({
       titulo: evento.summary || '(sin título)',
+      descripcion: evento.description || '',
       fecha: evento.start?.date || evento.start?.dateTime,
+      esFechaCompleta: !!evento.start?.date, // true = evento de "todo el día" (formato YYYY-MM-DD)
       colorId: evento.colorId,
-      tipo
+      tipoOrigen: tipo
     }));
   } catch (error) {
     console.error(`Error de red consultando calendario (${tipo}):`, error);
@@ -1772,6 +1922,20 @@ const COLOR_POR_ID_GOOGLE = {
   '10': '#1a7a3e'  // fecha importante / verde
 };
 
+// Convierte una fecha de Google Calendar a un objeto Date LOCAL, sin desfase de zona horaria.
+// Los eventos de "todo el día" vienen como "2026-07-05" y deben interpretarse tal cual,
+// no como UTC (que causaría que se muestre un día antes en Perú).
+function parsearFechaEventoGoogle(fechaStr, esFechaCompleta) {
+  if (esFechaCompleta) {
+    const [anio, mes, dia] = fechaStr.split('-').map(Number);
+    return new Date(anio, mes - 1, dia);
+  }
+  return new Date(fechaStr);
+}
+
+let cacheEventosCalendario = []; // guardamos la última carga para poder filtrar sin volver a pedirla
+let filtroEventosActivo = 'todos';
+
 async function cargarProximosEventos() {
   const contenedor = document.getElementById('listaProximosEventos');
 
@@ -1780,29 +1944,68 @@ async function cargarProximosEventos() {
     obtenerEventosDeCalendario(window._CALENDAR_ID_FECHAS, 'fecha')
   ]);
 
-  const todosLosEventos = [...eventosTareas, ...eventosFechas].filter(e => e.fecha);
+  const todosLosEventos = [...eventosTareas, ...eventosFechas]
+    .filter(e => e.fecha)
+    .map(e => {
+      // Detección robusta del tipo: si el color es el de "fecha importante" (verde, colorId 10),
+      // lo tratamos como fecha importante sin importar de qué calendario vino (evita el bug
+      // si algún evento quedó mal clasificado).
+      const tipo = e.colorId === '10' ? 'fecha' : (e.colorId ? 'tarea' : e.tipoOrigen);
+      return { ...e, tipo };
+    });
 
-  todosLosEventos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+  todosLosEventos.sort((a, b) => {
+    return parsearFechaEventoGoogle(a.fecha, a.esFechaCompleta) - parsearFechaEventoGoogle(b.fecha, b.esFechaCompleta);
+  });
 
-  if (todosLosEventos.length === 0) {
+  cacheEventosCalendario = todosLosEventos;
+  pintarListaEventos();
+}
+
+function cambiarFiltroEventos(tipo) {
+  filtroEventosActivo = tipo;
+  document.querySelectorAll('.chipFiltro').forEach(chip => {
+    chip.classList.toggle('activo', chip.dataset.filtro === tipo);
+  });
+  pintarListaEventos();
+}
+
+function pintarListaEventos() {
+  const contenedor = document.getElementById('listaProximosEventos');
+  let lista = cacheEventosCalendario;
+
+  if (filtroEventosActivo !== 'todos') {
+    lista = lista.filter(e => e.tipo === filtroEventosActivo);
+  }
+
+  if (lista.length === 0) {
     contenedor.innerHTML = '<div class="vacioColumna">No hay eventos en los próximos 7 días</div>';
     return;
   }
 
   contenedor.innerHTML = '';
 
-  todosLosEventos.forEach(evento => {
-    const fecha = new Date(evento.fecha);
+  lista.forEach((evento, idx) => {
+    const fecha = parsearFechaEventoGoogle(evento.fecha, evento.esFechaCompleta);
     const diaTexto = fecha.toLocaleDateString('es-PE', { weekday: 'short', day: '2-digit', month: 'short' });
     const color = COLOR_POR_ID_GOOGLE[evento.colorId] || (evento.tipo === 'fecha' ? '#1a7a3e' : '#94a3b8');
 
     const fila = document.createElement('div');
     fila.className = 'eventoProximo';
+    fila.onclick = () => fila.classList.toggle('expandido');
+
+    const detalleTexto = evento.descripcion
+      ? evento.descripcion
+      : (evento.tipo === 'fecha' ? 'Fecha importante del club.' : 'Sin descripción adicional.');
+
     fila.innerHTML = `
-      <span class="barraColor" style="background:${color}"></span>
-      <span class="diaEvento">${diaTexto}</span>
-      <span class="tituloEvento">${escaparHtml(evento.titulo)}</span>
-      <span class="tipoEvento">${evento.tipo === 'fecha' ? '🎉 Fecha importante' : '📋 Tarea'}</span>
+      <div class="filaPrincipalEvento">
+        <span class="barraColor" style="background:${color}"></span>
+        <span class="diaEvento">${diaTexto}</span>
+        <span class="tituloEvento">${escaparHtml(evento.titulo)}</span>
+        <span class="tipoEvento">${evento.tipo === 'fecha' ? '🎉 Fecha importante' : '📋 Tarea'}</span>
+      </div>
+      <div class="detalleEvento">${escaparHtml(detalleTexto)}</div>
     `;
     contenedor.appendChild(fila);
   });
@@ -1812,6 +2015,99 @@ async function cargarProximosEventos() {
 setInterval(() => {
   if (usuarioActual) cargarProximosEventos();
 }, 5 * 60 * 1000);
+
+// ===================== CALENDARIO COMPLETO (VISTA DE MES) =====================
+
+function abrirCalendarioCompleto() {
+  const cont = document.getElementById('contenedorIframeCalendario');
+  const params = new URLSearchParams({
+    src: window._CALENDAR_ID_TAREAS,
+    ctz: 'America/Lima',
+    mode: 'MONTH',
+    showTitle: '0',
+    showPrint: '0',
+    showCalendars: '0'
+  });
+  params.append('src', window._CALENDAR_ID_FECHAS);
+  params.append('color', '%23033587');
+
+  const src = `https://calendar.google.com/calendar/embed?${params.toString()}`;
+  cont.innerHTML = `<iframe src="${src}" style="border:0; width:100%; height:100%; border-radius:8px;" frameborder="0"></iframe>`;
+  document.getElementById('overlayCalendarioCompleto').classList.add('visible');
+}
+
+function cerrarCalendarioCompleto() {
+  document.getElementById('overlayCalendarioCompleto').classList.remove('visible');
+  document.getElementById('contenedorIframeCalendario').innerHTML = '';
+}
+
+// ===================== AGREGAR FECHA IMPORTANTE =====================
+
+function abrirModalFechaImportante() {
+  document.getElementById('fechaImportanteTitulo').value = '';
+  document.getElementById('fechaImportanteDescripcion').value = '';
+  document.getElementById('fechaImportanteFecha').value = '';
+  document.getElementById('fechaImportanteRecurrente').checked = true;
+  document.getElementById('overlayFechaImportante').classList.add('visible');
+}
+
+function cerrarModalFechaImportante() {
+  document.getElementById('overlayFechaImportante').classList.remove('visible');
+}
+
+async function guardarFechaImportante() {
+  const titulo = document.getElementById('fechaImportanteTitulo').value.trim();
+  const descripcion = document.getElementById('fechaImportanteDescripcion').value.trim();
+  const fechaStr = document.getElementById('fechaImportanteFecha').value;
+  const recurrenteAnual = document.getElementById('fechaImportanteRecurrente').checked;
+
+  if (!titulo || !fechaStr) {
+    alert('Completa el título y la fecha.');
+    return;
+  }
+
+  const { collection, addDoc, serverTimestamp } = window._fs;
+
+  try {
+    await addDoc(collection(window._db, 'fechasImportantes'), {
+      titulo,
+      descripcion,
+      fecha: new Date(fechaStr + 'T00:00:00'),
+      recurrenteAnual,
+      creadoPorNombre: usuarioActual.nombre,
+      creadoEn: serverTimestamp()
+    });
+    cerrarModalFechaImportante();
+    alert(`"${titulo}" guardada. Aparecerá en el calendario dentro de los próximos 15 minutos (o antes si el admin fuerza la sincronización).`);
+  } catch (error) {
+    console.error(error);
+    alert('Hubo un error al guardar la fecha importante.');
+  }
+}
+
+// ===================== FILTRO DESDE EL PANEL DE RESUMEN =====================
+
+let filtroResumenActivo = null;
+
+function aplicarFiltroResumen(tipo) {
+  filtroResumenActivo = tipo;
+  const aviso = document.getElementById('avisoFiltroResumen');
+  const textos = {
+    completadasSemana: 'Completadas esta semana',
+    pendientes: 'Pendientes totales',
+    vencidas: 'Vencidas',
+    porVencer: 'Vencen en 3 días'
+  };
+
+  if (tipo) {
+    aviso.style.display = 'block';
+    document.getElementById('textoFiltroResumen').textContent = textos[tipo] || tipo;
+  } else {
+    aviso.style.display = 'none';
+  }
+
+  pintarKanban();
+}
 </script>
 
 </body>
