@@ -35,11 +35,10 @@ oauth2Client.setCredentials({
 const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
 // ===================== COLORES POR PRIORIDAD =====================
-// colorId de Google Calendar: https://developers.google.com/calendar/api/v3/reference/colors
 const COLOR_POR_PRIORIDAD = {
-  alta: '11',   // rojo (tomato)
-  media: '5',   // amarillo/naranja (banana)
-  baja: '8'     // gris (graphite)
+  alta: '11',
+  media: '5',
+  baja: '8'
 };
 
 // ===================== UTILIDADES =====================
@@ -52,7 +51,6 @@ function timestampADate(valor) {
 }
 
 function formatearFechaGoogle(date) {
-  // Google Calendar espera formato "YYYY-MM-DD" para eventos de todo el día
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
@@ -75,7 +73,6 @@ async function sincronizarTareas() {
     const tarea = docSnap.data();
     const tareaId = docSnap.id;
 
-    // 1. Si la tarea está completada y ya pasaron los días definidos, borrar el evento
     if (tarea.estado === 'completada' && tarea.fechaCompletada && !tarea.eliminadaDeCalendario) {
       const fechaCompletada = timestampADate(tarea.fechaCompletada);
       const limiteBorrado = sumarDias(fechaCompletada, DIAS_ANTES_DE_BORRAR_COMPLETADA);
@@ -93,11 +90,10 @@ async function sincronizarTareas() {
           }
         }
         await docSnap.ref.update({ eliminadaDeCalendario: true });
-        continue; // ya no seguimos procesando esta tarea
+        continue;
       }
     }
 
-    // 2. Si no tiene fecha límite, no genera evento
     if (!tarea.fechaLimite) continue;
 
     const fechaLimite = timestampADate(tarea.fechaLimite);
@@ -119,7 +115,6 @@ async function sincronizarTareas() {
 
     try {
       if (tarea.eventoCalendarId) {
-        // Ya existe, lo actualizamos (por si cambió título, fecha, prioridad, etc.)
         await calendar.events.update({
           calendarId: CALENDAR_ID_TAREAS,
           eventId: tarea.eventoCalendarId,
@@ -127,7 +122,6 @@ async function sincronizarTareas() {
         });
         console.log(`Evento actualizado: ${tarea.titulo}`);
       } else {
-        // No existe, lo creamos
         const respuesta = await calendar.events.insert({
           calendarId: CALENDAR_ID_TAREAS,
           requestBody: recursoEvento
@@ -150,7 +144,6 @@ async function sincronizarFechasImportantes() {
   for (const docSnap of snap.docs) {
     const evento = docSnap.data();
 
-    // Si ya tiene evento creado en Calendar, no lo tocamos (estas fechas no cambian)
     if (evento.eventoCalendarId) continue;
     if (!evento.fecha) continue;
 
@@ -161,7 +154,7 @@ async function sincronizarFechasImportantes() {
       description: evento.descripcion || '',
       start: { date: formatearFechaGoogle(fecha) },
       end: { date: formatearFechaGoogle(sumarDias(fecha, 1)) },
-      colorId: '10', // verde (basil)
+      colorId: '10',
       recurrence: evento.recurrenteAnual ? ['RRULE:FREQ=YEARLY'] : undefined
     };
 
