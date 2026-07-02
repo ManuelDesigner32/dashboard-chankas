@@ -218,6 +218,155 @@
 
   .toolbar h2 { font-size: 18px; color: var(--texto); }
 
+  /* ---------- PANEL CALENDARIO ---------- */
+  .panelCalendario {
+    background: var(--blanco);
+    border-radius: var(--radio);
+    padding: 18px 20px;
+    margin-bottom: 20px;
+    border: 1.5px solid var(--gris-linea);
+  }
+
+  .panelCalendarioHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .panelCalendarioHeader h3 {
+    font-size: 15px;
+    color: var(--vino-chankas);
+  }
+
+  .leyendaCalendario {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    font-size: 11px;
+    color: var(--texto-suave);
+  }
+
+  .leyendaCalendario span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .puntoLeyenda {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .listaProximosEventos {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 260px;
+    overflow-y: auto;
+  }
+
+  .eventoProximo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    background: var(--gris-fondo);
+    font-size: 13px;
+  }
+
+  .eventoProximo .barraColor {
+    width: 4px;
+    align-self: stretch;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  .eventoProximo .diaEvento {
+    font-weight: 700;
+    font-size: 11px;
+    color: var(--texto-suave);
+    text-transform: uppercase;
+    min-width: 58px;
+  }
+
+  .eventoProximo .tituloEvento {
+    flex: 1;
+    font-weight: 500;
+  }
+
+  .eventoProximo .tipoEvento {
+    font-size: 11px;
+    color: var(--texto-suave);
+  }
+
+  /* ---------- PANEL DE CARGA POR PERSONA ---------- */
+  .panelCarga {
+    background: var(--blanco);
+    border-radius: var(--radio);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    border: 1.5px solid var(--gris-linea);
+  }
+
+  .panelCarga h3 {
+    font-size: 14px;
+    color: var(--vino-chankas);
+    margin-bottom: 12px;
+  }
+
+  .listaCarga {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .fichaCarga {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: var(--gris-fondo);
+    border-radius: 8px;
+    min-width: 160px;
+  }
+
+  .fichaCarga .infoCarga {
+    flex: 1;
+  }
+
+  .fichaCarga .nombreCarga {
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .fichaCarga .barraCarga {
+    height: 5px;
+    background: var(--gris-linea);
+    border-radius: 3px;
+    margin-top: 4px;
+    overflow: hidden;
+  }
+
+  .fichaCarga .barraCargaRelleno {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s;
+  }
+
+  .fichaCarga .numeroCarga {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--vino-chankas);
+    min-width: 20px;
+    text-align: right;
+  }
+
   .btnNuevaTarea {
     background: var(--naranja-chankas);
     color: var(--vino-oscuro);
@@ -505,9 +654,34 @@
   </header>
 
   <main>
+    <div class="panelCalendario">
+      <div class="panelCalendarioHeader">
+        <h3>📅 Próximos 7 días</h3>
+        <div class="leyendaCalendario">
+          <span><i class="puntoLeyenda" style="background:#d64545"></i> Alta</span>
+          <span><i class="puntoLeyenda" style="background:#e0a400"></i> Media</span>
+          <span><i class="puntoLeyenda" style="background:#94a3b8"></i> Baja</span>
+          <span><i class="puntoLeyenda" style="background:#1a7a3e"></i> Fecha importante</span>
+        </div>
+      </div>
+      <div id="listaProximosEventos" class="listaProximosEventos">
+        <div class="vacioColumna">Cargando eventos...</div>
+      </div>
+    </div>
+
+    <div class="panelCarga" id="panelCarga">
+      <h3>👥 Carga por persona</h3>
+      <div class="listaCarga" id="listaCarga"></div>
+    </div>
+
     <div class="toolbar">
       <h2>Tareas del equipo</h2>
-      <button class="btnNuevaTarea" onclick="abrirModalNuevaTarea()">+ Nueva tarea</button>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <select id="filtroUsuario" onchange="pintarKanban()" style="padding:8px 12px; border-radius:8px; border:1.5px solid var(--gris-linea); font-size:13px;">
+          <option value="">Todos los usuarios</option>
+        </select>
+        <button class="btnNuevaTarea" onclick="abrirModalNuevaTarea()">+ Nueva tarea</button>
+      </div>
     </div>
 
     <div class="kanban">
@@ -584,6 +758,11 @@
       <button class="btnPrimario" onclick="guardarTarea()">Guardar tarea</button>
     </div>
 
+    <div id="seccionHistorial" style="display:none; margin-top:16px; padding-top:14px; border-top:1.5px solid var(--gris-linea);">
+      <label style="display:block; font-size:12px; font-weight:600; color:var(--texto-suave); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;">Historial</label>
+      <div id="listaHistorial" style="display:flex; flex-direction:column; gap:6px; max-height:140px; overflow-y:auto; font-size:12px; color:var(--texto-suave);"></div>
+    </div>
+
     <button type="button" class="btnEliminarTarea" id="btnEliminarTarea" onclick="eliminarTarea()" style="display:none;">🗑 Eliminar tarea</button>
   </div>
 </div>
@@ -658,7 +837,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import {
     getFirestore, collection, doc, getDocs, getDoc, addDoc, updateDoc, deleteDoc,
-    onSnapshot, query, where, serverTimestamp
+    onSnapshot, query, where, serverTimestamp, arrayUnion
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   // ------------- CONFIGURACIÓN FIREBASE -------------
@@ -671,12 +850,17 @@
     appId: "1:204388822073:web:7d3ede3539e638f9d871e8"
   };
 
+  // Configuración de Google Calendar (solo lectura, para la vista de "próximos 7 días")
+  window._GOOGLE_CALENDAR_API_KEY = "AIzaSyC_-3Ut5XEnfjbttzAJ81ygQo7aP6Y3hnc";
+  window._CALENDAR_ID_TAREAS = "97cd93ca8ba45f52e489a863fadd71953a07b6f0f081262afb0e73b2a469f4d9@group.calendar.google.com";
+  window._CALENDAR_ID_FECHAS = "4154d0387a1f406830c750d693543a6a71e50451dbffe7e6ce5c4e77db9a2819@group.calendar.google.com";
+
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
   // Exponemos lo necesario al scope global para los onclick del HTML
   window._db = db;
-  window._fs = { collection, doc, getDocs, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, serverTimestamp };
+  window._fs = { collection, doc, getDocs, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, serverTimestamp, arrayUnion };
 
   // Arrancamos la lógica de la app una vez Firebase está listo
   window.dispatchEvent(new Event('firebaseListo'));
@@ -835,6 +1019,7 @@ async function mostrarApp() {
 
   await cargarUsuarios();
   escucharTareasEnTiempoReal();
+  cargarProximosEventos();
 }
 
 async function cargarUsuarios() {
@@ -842,7 +1027,9 @@ async function cargarUsuarios() {
   const snap = await getDocs(collection(window._db, 'usuarios'));
   usuariosCache = {};
   const selectAsignado = document.getElementById('tareaAsignadoA');
+  const selectFiltro = document.getElementById('filtroUsuario');
   selectAsignado.innerHTML = '';
+  selectFiltro.innerHTML = '<option value="">Todos los usuarios</option>';
 
   snap.forEach(docSnap => {
     const datos = docSnap.data();
@@ -853,6 +1040,11 @@ async function cargarUsuarios() {
     opt.value = docSnap.id;
     opt.textContent = datos.nombre;
     selectAsignado.appendChild(opt);
+
+    const optFiltro = document.createElement('option');
+    optFiltro.value = docSnap.id;
+    optFiltro.textContent = datos.nombre;
+    selectFiltro.appendChild(optFiltro);
   });
 }
 
@@ -874,8 +1066,10 @@ function escucharTareasEnTiempoReal() {
 function pintarKanban() {
   const estados = ['pendiente', 'en_proceso', 'completada'];
   const listasPorEstado = { pendiente: [], en_proceso: [], completada: [] };
+  const filtroUsuarioId = document.getElementById('filtroUsuario')?.value || '';
 
   Object.values(tareasCache).forEach(t => {
+    if (filtroUsuarioId && t.asignadoA !== filtroUsuarioId) return;
     if (listasPorEstado[t.estado]) listasPorEstado[t.estado].push(t);
   });
 
@@ -902,6 +1096,45 @@ function pintarKanban() {
     lista.forEach(tarea => {
       contenedor.appendChild(crearTarjetaTarea(tarea));
     });
+  });
+
+  pintarCargaPorPersona();
+}
+
+function pintarCargaPorPersona() {
+  const cont = document.getElementById('listaCarga');
+  if (!cont) return;
+  cont.innerHTML = '';
+
+  // Contamos solo tareas activas (no completadas) por usuario
+  const conteoPorUsuario = {};
+  Object.values(tareasCache).forEach(t => {
+    if (t.estado === 'completada') return;
+    if (!t.asignadoA) return;
+    conteoPorUsuario[t.asignadoA] = (conteoPorUsuario[t.asignadoA] || 0) + 1;
+  });
+
+  const maxCarga = Math.max(1, ...Object.values(conteoPorUsuario), 1);
+
+  const usuariosOrdenados = Object.values(usuariosCache).sort((a, b) => {
+    return (conteoPorUsuario[b.id] || 0) - (conteoPorUsuario[a.id] || 0);
+  });
+
+  usuariosOrdenados.forEach(u => {
+    const cantidad = conteoPorUsuario[u.id] || 0;
+    const porcentaje = Math.round((cantidad / maxCarga) * 100);
+
+    const ficha = document.createElement('div');
+    ficha.className = 'fichaCarga';
+    ficha.innerHTML = `
+      <span class="avatarMini" style="background:${u.color}; width:30px; height:30px; font-size:11px;">${inicialesDe(u.nombre)}</span>
+      <div class="infoCarga">
+        <div class="nombreCarga">${escaparHtml(u.nombre)}</div>
+        <div class="barraCarga"><div class="barraCargaRelleno" style="width:${porcentaje}%; background:${u.color}"></div></div>
+      </div>
+      <span class="numeroCarga">${cantidad}</span>
+    `;
+    cont.appendChild(ficha);
   });
 }
 
@@ -979,13 +1212,22 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function cambiarEstadoTarea(tareaId, nuevoEstado) {
-  const { doc, updateDoc, serverTimestamp } = window._fs;
+  const { doc, updateDoc, serverTimestamp, arrayUnion } = window._fs;
+  const nombresEstado = { pendiente: 'Pendiente', en_proceso: 'En proceso', completada: 'Completada' };
+
   const cambios = { estado: nuevoEstado };
   if (nuevoEstado === 'completada') {
     cambios.fechaCompletada = serverTimestamp();
   } else {
     cambios.fechaCompletada = null;
   }
+
+  cambios.historial = arrayUnion({
+    accion: `Movió a "${nombresEstado[nuevoEstado] || nuevoEstado}"`,
+    usuarioNombre: usuarioActual.nombre,
+    fecha: new Date()
+  });
+
   await updateDoc(doc(window._db, 'tareas', tareaId), cambios);
 }
 
@@ -1002,6 +1244,7 @@ function abrirModalNuevaTarea() {
   if (usuarioActual) document.getElementById('tareaAsignadoA').value = usuarioActual.id;
   pintarChecklistEditor();
   document.getElementById('btnEliminarTarea').style.display = 'none';
+  document.getElementById('seccionHistorial').style.display = 'none';
   document.getElementById('overlayTarea').classList.add('visible');
 }
 
@@ -1026,6 +1269,7 @@ function abrirModalEditarTarea(tareaId) {
   }
 
   pintarChecklistEditor();
+  pintarHistorialTarea(tarea.historial || []);
 
   const puedeEliminar = usuarioActual.rol === 'admin'
     || tarea.asignadoA === usuarioActual.id
@@ -1033,6 +1277,35 @@ function abrirModalEditarTarea(tareaId) {
   document.getElementById('btnEliminarTarea').style.display = puedeEliminar ? 'block' : 'none';
 
   document.getElementById('overlayTarea').classList.add('visible');
+}
+
+function pintarHistorialTarea(historial) {
+  const seccion = document.getElementById('seccionHistorial');
+  const cont = document.getElementById('listaHistorial');
+
+  if (!historial || historial.length === 0) {
+    seccion.style.display = 'none';
+    return;
+  }
+
+  seccion.style.display = 'block';
+  cont.innerHTML = '';
+
+  const ordenado = [...historial].sort((a, b) => {
+    const fa = a.fecha?.toDate ? a.fecha.toDate() : new Date(a.fecha);
+    const fb = b.fecha?.toDate ? b.fecha.toDate() : new Date(b.fecha);
+    return fb - fa; // más reciente primero
+  });
+
+  ordenado.forEach(entrada => {
+    const fecha = entrada.fecha?.toDate ? entrada.fecha.toDate() : new Date(entrada.fecha);
+    const fechaTexto = fecha.toLocaleDateString('es-PE', { day: '2-digit', month: 'short' }) + ' ' +
+      fecha.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+
+    const linea = document.createElement('div');
+    linea.textContent = `• ${entrada.usuarioNombre}: ${entrada.accion} — ${fechaTexto}`;
+    cont.appendChild(linea);
+  });
 }
 
 function cerrarModalTarea() {
@@ -1093,7 +1366,7 @@ async function guardarTarea() {
   const fechaLimiteStr = document.getElementById('tareaFechaLimite').value;
   const checklistLimpio = checklistTemporal.filter(i => i.texto.trim() !== '');
 
-  const { collection, doc, addDoc, updateDoc, serverTimestamp } = window._fs;
+  const { collection, doc, addDoc, updateDoc, serverTimestamp, arrayUnion } = window._fs;
 
   const datosTarea = {
     titulo,
@@ -1109,11 +1382,35 @@ async function guardarTarea() {
 
   try {
     if (tareaEditandoId) {
+      const tareaAnterior = tareasCache[tareaEditandoId];
+
+      // Si cambió el asignado, dejamos constancia en el historial
+      if (tareaAnterior && tareaAnterior.asignadoA !== asignadoA) {
+        const nombreAnterior = usuariosCache[tareaAnterior.asignadoA]?.nombre || 'Sin asignar';
+        const nombreNuevo = usuariosCache[asignadoA]?.nombre || 'Sin asignar';
+        datosTarea.historial = arrayUnion({
+          accion: `Reasignada de ${nombreAnterior} a ${nombreNuevo}`,
+          usuarioNombre: usuarioActual.nombre,
+          fecha: new Date()
+        });
+      } else {
+        datosTarea.historial = arrayUnion({
+          accion: 'Editó los detalles de la tarea',
+          usuarioNombre: usuarioActual.nombre,
+          fecha: new Date()
+        });
+      }
+
       await updateDoc(doc(window._db, 'tareas', tareaEditandoId), datosTarea);
     } else {
       datosTarea.estado = 'pendiente';
       datosTarea.creadoEn = serverTimestamp();
       datosTarea.fechaCompletada = null;
+      datosTarea.historial = [{
+        accion: 'Creó la tarea',
+        usuarioNombre: usuarioActual.nombre,
+        fecha: new Date()
+      }];
       await addDoc(collection(window._db, 'tareas'), datosTarea);
     }
     cerrarModalTarea();
@@ -1276,6 +1573,91 @@ async function confirmarCambiarPassword() {
     alert('Hubo un error al cambiar la contraseña.');
   }
 }
+
+// ===================== VISTA "PRÓXIMOS 7 DÍAS" (GOOGLE CALENDAR) =====================
+
+async function obtenerEventosDeCalendario(calendarId, tipo) {
+  const ahora = new Date();
+  const en7dias = new Date();
+  en7dias.setDate(en7dias.getDate() + 7);
+
+  const params = new URLSearchParams({
+    key: window._GOOGLE_CALENDAR_API_KEY,
+    timeMin: ahora.toISOString(),
+    timeMax: en7dias.toISOString(),
+    singleEvents: 'true',
+    orderBy: 'startTime',
+    maxResults: '25'
+  });
+
+  const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?${params.toString()}`;
+
+  try {
+    const respuesta = await fetch(url);
+    if (!respuesta.ok) {
+      console.error(`Error consultando calendario (${tipo}):`, respuesta.status, await respuesta.text());
+      return [];
+    }
+    const datos = await respuesta.json();
+    return (datos.items || []).map(evento => ({
+      titulo: evento.summary || '(sin título)',
+      fecha: evento.start?.date || evento.start?.dateTime,
+      colorId: evento.colorId,
+      tipo
+    }));
+  } catch (error) {
+    console.error(`Error de red consultando calendario (${tipo}):`, error);
+    return [];
+  }
+}
+
+const COLOR_POR_ID_GOOGLE = {
+  '11': '#d64545', // alta / rojo
+  '5': '#e0a400',  // media / amarillo
+  '8': '#94a3b8',  // baja / gris
+  '10': '#1a7a3e'  // fecha importante / verde
+};
+
+async function cargarProximosEventos() {
+  const contenedor = document.getElementById('listaProximosEventos');
+
+  const [eventosTareas, eventosFechas] = await Promise.all([
+    obtenerEventosDeCalendario(window._CALENDAR_ID_TAREAS, 'tarea'),
+    obtenerEventosDeCalendario(window._CALENDAR_ID_FECHAS, 'fecha')
+  ]);
+
+  const todosLosEventos = [...eventosTareas, ...eventosFechas].filter(e => e.fecha);
+
+  todosLosEventos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+  if (todosLosEventos.length === 0) {
+    contenedor.innerHTML = '<div class="vacioColumna">No hay eventos en los próximos 7 días</div>';
+    return;
+  }
+
+  contenedor.innerHTML = '';
+
+  todosLosEventos.forEach(evento => {
+    const fecha = new Date(evento.fecha);
+    const diaTexto = fecha.toLocaleDateString('es-PE', { weekday: 'short', day: '2-digit', month: 'short' });
+    const color = COLOR_POR_ID_GOOGLE[evento.colorId] || (evento.tipo === 'fecha' ? '#1a7a3e' : '#94a3b8');
+
+    const fila = document.createElement('div');
+    fila.className = 'eventoProximo';
+    fila.innerHTML = `
+      <span class="barraColor" style="background:${color}"></span>
+      <span class="diaEvento">${diaTexto}</span>
+      <span class="tituloEvento">${escaparHtml(evento.titulo)}</span>
+      <span class="tipoEvento">${evento.tipo === 'fecha' ? '🎉 Fecha importante' : '📋 Tarea'}</span>
+    `;
+    contenedor.appendChild(fila);
+  });
+}
+
+// Refrescamos la vista de calendario cada 5 minutos automáticamente
+setInterval(() => {
+  if (usuarioActual) cargarProximosEventos();
+}, 5 * 60 * 1000);
 </script>
 
 </body>
