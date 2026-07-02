@@ -1947,10 +1947,11 @@ async function cargarProximosEventos() {
   const todosLosEventos = [...eventosTareas, ...eventosFechas]
     .filter(e => e.fecha)
     .map(e => {
-      // Detección robusta del tipo: si el color es el de "fecha importante" (verde, colorId 10),
-      // lo tratamos como fecha importante sin importar de qué calendario vino (evita el bug
-      // si algún evento quedó mal clasificado).
-      const tipo = e.colorId === '10' ? 'fecha' : (e.colorId ? 'tarea' : e.tipoOrigen);
+      // El tipo se determina por el calendario de origen (Tareas vs Fechas importantes),
+      // que es 100% confiable. El color de Google Calendar NO se usa para esto porque
+      // los eventos recurrentes (fechas importantes anuales) a veces no devuelven
+      // su colorId correctamente en la API, lo que causaba etiquetas incorrectas.
+      const tipo = e.tipoOrigen;
       return { ...e, tipo };
     });
 
@@ -2112,4 +2113,3 @@ function aplicarFiltroResumen(tipo) {
 
 </body>
 </html>
-
