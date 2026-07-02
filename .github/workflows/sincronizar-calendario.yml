@@ -1,3 +1,4 @@
+
 name: Sincronizar Calendario Chankas
 
 on:
@@ -21,8 +22,8 @@ jobs:
         run: npm install
         working-directory: ./scripts
 
-      - name: Ejecutar sincronización
-        run: npm run sync
+      - name: Sincronizar con Google Calendar
+        run: node sync-calendar.js
         working-directory: ./scripts
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
@@ -31,3 +32,9 @@ jobs:
           GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
           CALENDAR_ID_TAREAS: ${{ secrets.CALENDAR_ID_TAREAS }}
           CALENDAR_ID_FECHAS: ${{ secrets.CALENDAR_ID_FECHAS }}
+
+      - name: Enviar notificaciones push
+        run: node send-notifications.js
+        working-directory: ./scripts
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
