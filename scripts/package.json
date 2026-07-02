@@ -1,0 +1,13 @@
+{
+  "name": "dashboard-chankas-sync",
+  "version": "1.0.0",
+  "description": "Sincronización automática de tareas y fechas importantes con Google Calendar",
+  "main": "sync-calendar.js",
+  "scripts": {
+    "sync": "node sync-calendar.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.1.0",
+    "googleapis": "^140.0.0"
+  }
+}
