@@ -16,6 +16,12 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+// Manejador básico de fetch (requerido por algunos navegadores para considerar la app instalable).
+// No implementamos caché offline por ahora, solo dejamos pasar las peticiones normalmente.
+self.addEventListener('fetch', (event) => {
+  event.respondWith(fetch(event.request));
+});
+
 // Se ejecuta cuando llega una notificación y el dashboard NO está abierto/en foco
 messaging.onBackgroundMessage((payload) => {
   const titulo = payload.notification?.title || 'Dashboard Chankas';
