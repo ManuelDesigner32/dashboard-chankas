@@ -156,9 +156,6 @@ async function sincronizarFechasImportantes() {
 
   for (const docSnap of snap.docs) {
     const evento = docSnap.data();
-
-    // Si ya tiene evento creado en Calendar, no lo tocamos (estas fechas no cambian)
-    if (evento.eventoCalendarId) continue;
     if (!evento.fecha) continue;
 
     const fecha = timestampADate(evento.fecha);
@@ -178,14 +175,24 @@ async function sincronizarFechasImportantes() {
     };
 
     try {
-      const respuesta = await calendar.events.insert({
-        calendarId: CALENDAR_ID_FECHAS,
-        requestBody: recursoEvento
-      });
-      await docSnap.ref.update({ eventoCalendarId: respuesta.data.id });
-      console.log(`Fecha importante creada: ${evento.titulo}`);
+      if (evento.eventoCalendarId) {
+        // Ya existe: lo actualizamos (por si cambió la categoría, título o descripción)
+        await calendar.events.patch({
+          calendarId: CALENDAR_ID_FECHAS,
+          eventId: evento.eventoCalendarId,
+          requestBody: recursoEvento
+        });
+        console.log(`Fecha importante actualizada: ${evento.titulo}`);
+      } else {
+        const respuesta = await calendar.events.insert({
+          calendarId: CALENDAR_ID_FECHAS,
+          requestBody: recursoEvento
+        });
+        await docSnap.ref.update({ eventoCalendarId: respuesta.data.id });
+        console.log(`Fecha importante creada: ${evento.titulo}`);
+      }
     } catch (err) {
-      console.error(`Error creando "${evento.titulo}":`, err.message);
+      console.error(`Error sincronizando "${evento.titulo}":`, err.message);
     }
   }
 }
