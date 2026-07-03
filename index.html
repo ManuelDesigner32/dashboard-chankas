@@ -25,7 +25,13 @@
 
   body {
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    background: linear-gradient(165deg, #f0d3de 0%, #ead9e6 30%, #f6e2cf 70%, #fbd9ae 100%);
+    background:
+      radial-gradient(circle at 12% 15%, rgba(255, 144, 0, 0.22), transparent 42%),
+      radial-gradient(circle at 88% 10%, rgba(102, 41, 78, 0.35), transparent 45%),
+      radial-gradient(circle at 80% 90%, rgba(255, 144, 0, 0.12), transparent 40%),
+      repeating-linear-gradient(135deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 2px, transparent 2px, transparent 26px),
+      linear-gradient(160deg, #2c0512 0%, #4d0520 35%, #3a1230 65%, #200a1c 100%);
+    background-attachment: fixed;
     color: var(--texto);
     min-height: 100vh;
   }
@@ -214,6 +220,10 @@
     margin-bottom: 20px;
     flex-wrap: wrap;
     gap: 12px;
+    background: var(--blanco);
+    border-radius: var(--radio);
+    padding: 14px 18px;
+    border: 1.5px solid var(--gris-linea);
   }
 
   .toolbar h2 { font-size: 18px; color: var(--texto); }
@@ -2167,7 +2177,7 @@ function aplicarFiltroResumen(tipo) {
     toolbar.scrollIntoView({ behavior: 'smooth', block: 'start' });
     toolbar.style.transition = 'background 0.3s';
     toolbar.style.background = '#fff1de';
-    setTimeout(() => { toolbar.style.background = 'transparent'; }, 1200);
+    setTimeout(() => { toolbar.style.background = 'var(--blanco)'; }, 1200);
   }
 }
 </script>
