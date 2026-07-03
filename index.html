@@ -420,11 +420,12 @@
   /* ---------- KANBAN ---------- */
   .kanban {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 16px;
+    max-width: 720px;
   }
 
-  @media (max-width: 900px) {
+  @media (max-width: 700px) {
     .kanban { grid-template-columns: 1fr; }
   }
 
@@ -507,16 +508,40 @@
   }
 
   .badgePrioridad {
-    font-size: 10px;
-    font-weight: 700;
-    padding: 2px 7px;
-    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 12px;
     white-space: nowrap;
     text-transform: uppercase;
+    letter-spacing: 0.03em;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
   }
-  .badgePrioridad.alta { background: #fdecec; color: var(--rojo-alerta); }
-  .badgePrioridad.media { background: #fff1de; color: #b35f00; }
-  .badgePrioridad.baja { background: #eef0f2; color: var(--texto-suave); }
+  .badgePrioridad.alta { background: var(--rojo-alerta); }
+  .badgePrioridad.media { background: #e0a400; }
+  .badgePrioridad.baja { background: #94a3b8; }
+
+  .etiquetaUsuarioTarjeta {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 20px;
+    margin-top: 8px;
+  }
+
+  .puntoUsuarioTarjeta {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+  }
 
   .tarjetaMeta {
     display: flex;
@@ -654,7 +679,7 @@
   /* ---------- PANEL DE RESUMEN ---------- */
   .panelResumen {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 8px;
     margin-bottom: 8px;
   }
@@ -733,10 +758,6 @@
 
   <main>
     <div class="panelResumen" id="panelResumen">
-      <div class="fichaResumen" onclick="aplicarFiltroResumen('completadasSemana')">
-        <span class="numeroResumen" id="resumenCompletadasSemana">0</span>
-        <span class="etiquetaResumen">Completadas esta semana</span>
-      </div>
       <div class="fichaResumen" onclick="aplicarFiltroResumen('pendientes')">
         <span class="numeroResumen" id="resumenPendientes">0</span>
         <span class="etiquetaResumen">Pendientes totales</span>
@@ -756,7 +777,7 @@
 
     <div class="panelCalendario">
       <div class="panelCalendarioHeader">
-        <h3>📅 Próximos 7 días</h3>
+        <h3 id="tituloPanelCalendario">📅 Próximos 7 días</h3>
         <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
           <div class="leyendaCalendario">
             <span><i class="puntoLeyenda" style="background:#d64545"></i> Alta</span>
@@ -770,7 +791,16 @@
       <div class="filtrosEventos">
         <button type="button" class="chipFiltro activo" data-filtro="todos" onclick="cambiarFiltroEventos('todos')">Todos</button>
         <button type="button" class="chipFiltro" data-filtro="tarea" onclick="cambiarFiltroEventos('tarea')">📋 Tareas</button>
-        <button type="button" class="chipFiltro" data-filtro="fecha" onclick="cambiarFiltroEventos('fecha')">🎉 Fechas importantes</button>
+        <button type="button" class="chipFiltro" data-filtro="aniversario" onclick="cambiarFiltroEventos('aniversario')">🎉 Aniversarios</button>
+        <button type="button" class="chipFiltro" data-filtro="cumpleanos" onclick="cambiarFiltroEventos('cumpleanos')">🎂 Cumpleaños</button>
+        <button type="button" class="chipFiltro" data-filtro="civica" onclick="cambiarFiltroEventos('civica')">🏛 Cívicas</button>
+        <button type="button" class="chipFiltro" data-filtro="otro" onclick="cambiarFiltroEventos('otro')">📌 Otras</button>
+      </div>
+
+      <div class="filtrosEventos" style="margin-top:-4px;">
+        <span style="font-size:12px; color:var(--texto-suave);">Ver:</span>
+        <button type="button" class="chipFiltro activo" data-rango="7" onclick="cambiarRangoDias(7)">7 días</button>
+        <button type="button" class="chipFiltro" data-rango="15" onclick="cambiarRangoDias(15)">15 días</button>
         <div style="flex:1;"></div>
         <button type="button" class="btnSecundario" style="width:auto; padding:7px 12px; font-size:12px;" onclick="abrirModalFechaImportante()">+ Fecha importante</button>
         <button type="button" class="btnSecundario" style="width:auto; padding:7px 12px; font-size:12px;" onclick="abrirCalendarioCompleto()">🗓 Ver mes completo</button>
@@ -782,11 +812,11 @@
     </div>
 
     <div class="panelCarga" id="panelCarga">
-      <h3>👥 Carga por persona</h3>
+      <h3>👥 Carga por persona <span style="font-weight:400; color:var(--texto-suave); font-size:11px;">(clic para filtrar sus tareas)</span></h3>
       <div class="listaCarga" id="listaCarga"></div>
     </div>
 
-    <div class="toolbar">
+    <div class="toolbar" id="toolbarTareas">
       <h2>Tareas del equipo</h2>
       <div style="display:flex; gap:10px; align-items:center;">
         <select id="filtroUsuario" onchange="pintarKanban()" style="padding:8px 12px; border-radius:8px; border:1.5px solid var(--gris-linea); font-size:13px;">
@@ -803,14 +833,6 @@
           <span class="contador" id="contador-pendiente">0</span>
         </div>
         <div class="listaTarjetas" id="lista-pendiente" data-estado="pendiente"></div>
-      </div>
-
-      <div class="columna" data-estado="en_proceso">
-        <div class="columnaHeader">
-          <h3>En proceso</h3>
-          <span class="contador" id="contador-en_proceso">0</span>
-        </div>
-        <div class="listaTarjetas" id="lista-en_proceso" data-estado="en_proceso"></div>
       </div>
 
       <div class="columna" data-estado="completada">
@@ -962,6 +984,15 @@
     <div class="campo">
       <label>Título</label>
       <input type="text" id="fechaImportanteTitulo" placeholder="ej. Aniversario del club">
+    </div>
+    <div class="campo">
+      <label>Categoría</label>
+      <select id="fechaImportanteCategoria">
+        <option value="aniversario">🎉 Aniversario</option>
+        <option value="cumpleanos">🎂 Cumpleaños</option>
+        <option value="civica">🏛 Fecha cívica</option>
+        <option value="otro">📌 Otra</option>
+      </select>
     </div>
     <div class="campo">
       <label>Descripción (opcional)</label>
@@ -1272,25 +1303,13 @@ function escucharTareasEnTiempoReal() {
 }
 
 function pintarKanban() {
-  const estados = ['pendiente', 'en_proceso', 'completada'];
-  const listasPorEstado = { pendiente: [], en_proceso: [], completada: [] };
+  const estados = ['pendiente', 'completada'];
+  const listasPorEstado = { pendiente: [], completada: [] };
   const filtroUsuarioId = document.getElementById('filtroUsuario')?.value || '';
-
-  const hoyInicio = new Date();
-  hoyInicio.setHours(0, 0, 0, 0);
-  const diaSemana = hoyInicio.getDay();
-  const diffALunes = diaSemana === 0 ? 6 : diaSemana - 1;
-  const inicioSemana = new Date(hoyInicio);
-  inicioSemana.setDate(hoyInicio.getDate() - diffALunes);
 
   function pasaFiltroResumen(t) {
     if (!filtroResumenActivo) return true;
     if (filtroResumenActivo === 'pendientes') return t.estado !== 'completada';
-    if (filtroResumenActivo === 'completadasSemana') {
-      if (t.estado !== 'completada' || !t.fechaCompletada) return false;
-      const fc = t.fechaCompletada.toDate ? t.fechaCompletada.toDate() : new Date(t.fechaCompletada);
-      return fc >= inicioSemana;
-    }
     if (filtroResumenActivo === 'vencidas') {
       if (t.estado === 'completada' || !t.fechaLimite) return false;
       const dias = diasHastaVencer(t.fechaLimite);
@@ -1342,27 +1361,12 @@ function pintarKanban() {
 function pintarResumen() {
   const todasLasTareas = Object.values(tareasCache);
 
-  const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
-
-  // Inicio de la semana actual (lunes)
-  const diaSemana = hoy.getDay(); // 0=domingo, 1=lunes...
-  const diffALunes = diaSemana === 0 ? 6 : diaSemana - 1;
-  const inicioSemana = new Date(hoy);
-  inicioSemana.setDate(hoy.getDate() - diffALunes);
-
-  let completadasEstaSemana = 0;
   let pendientesTotales = 0;
   let vencidas = 0;
   let porVencer = 0;
 
   todasLasTareas.forEach(t => {
     if (t.estado !== 'completada') pendientesTotales++;
-
-    if (t.estado === 'completada' && t.fechaCompletada) {
-      const fc = t.fechaCompletada.toDate ? t.fechaCompletada.toDate() : new Date(t.fechaCompletada);
-      if (fc >= inicioSemana) completadasEstaSemana++;
-    }
 
     if (t.estado !== 'completada' && t.fechaLimite) {
       const dias = diasHastaVencer(t.fechaLimite);
@@ -1373,7 +1377,6 @@ function pintarResumen() {
     }
   });
 
-  document.getElementById('resumenCompletadasSemana').textContent = completadasEstaSemana;
   document.getElementById('resumenPendientes').textContent = pendientesTotales;
   document.getElementById('resumenVencidas').textContent = vencidas;
   document.getElementById('resumenPorVencer').textContent = porVencer;
@@ -1404,6 +1407,16 @@ function pintarCargaPorPersona() {
 
     const ficha = document.createElement('div');
     ficha.className = 'fichaCarga';
+    ficha.style.cursor = 'pointer';
+    ficha.title = `Ver solo las tareas de ${u.nombre}`;
+    ficha.onclick = () => {
+      document.getElementById('filtroUsuario').value = u.id;
+      filtroResumenActivo = null;
+      document.getElementById('avisoFiltroResumen').style.display = 'none';
+      pintarKanban();
+      const toolbar = document.getElementById('toolbarTareas');
+      toolbar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
     ficha.innerHTML = `
       <span class="avatarMini" style="background:${u.color}; width:30px; height:30px; font-size:11px;">${inicialesDe(u.nombre)}</span>
       <div class="infoCarga">
@@ -1447,15 +1460,19 @@ function crearTarjetaTarea(tarea) {
     checklistHtml = `<div class="checklistMini">☑ ${completados}/${tarea.checklist.length} completado</div>`;
   }
 
+  const iconoPrioridad = { alta: '🔴', media: '🟡', baja: '⚪' }[tarea.prioridad || 'media'];
+
   div.innerHTML = `
     <div class="tarjetaTop">
       <h4>${escaparHtml(tarea.titulo)}</h4>
-      <span class="badgePrioridad ${tarea.prioridad || 'media'}">${(tarea.prioridad || 'media')}</span>
+      <span class="badgePrioridad ${tarea.prioridad || 'media'}">${iconoPrioridad} ${(tarea.prioridad || 'media')}</span>
+    </div>
+    <div class="etiquetaUsuarioTarjeta" style="background:${colorAsignado}22; color:${colorAsignado}; border:1.5px solid ${colorAsignado};">
+      <span class="puntoUsuarioTarjeta" style="background:${colorAsignado}"></span>${escaparHtml(nombreAsignado)}
     </div>
     ${checklistHtml}
     <div class="tarjetaMeta">
       <span class="fechaLimite ${claseFecha}">📅 ${textoFecha || 'Sin fecha'}</span>
-      <span class="avatarMini" style="background:${colorAsignado}" title="${escaparHtml(nombreAsignado)}">${inicialesDe(nombreAsignado)}</span>
     </div>
   `;
 
@@ -1491,7 +1508,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function cambiarEstadoTarea(tareaId, nuevoEstado) {
   const { doc, updateDoc, serverTimestamp, arrayUnion } = window._fs;
-  const nombresEstado = { pendiente: 'Pendiente', en_proceso: 'En proceso', completada: 'Completada' };
+  const nombresEstado = { pendiente: 'Pendiente', completada: 'Completada' };
 
   const cambios = { estado: nuevoEstado };
   if (nuevoEstado === 'completada') {
@@ -1878,18 +1895,20 @@ async function confirmarCambiarPassword() {
 
 // ===================== VISTA "PRÓXIMOS 7 DÍAS" (GOOGLE CALENDAR) =====================
 
+let rangoDiasActivo = 7;
+
 async function obtenerEventosDeCalendario(calendarId, tipo) {
   const ahora = new Date();
-  const en7dias = new Date();
-  en7dias.setDate(en7dias.getDate() + 7);
+  const enRangoDias = new Date();
+  enRangoDias.setDate(enRangoDias.getDate() + rangoDiasActivo);
 
   const params = new URLSearchParams({
     key: window._GOOGLE_CALENDAR_API_KEY,
     timeMin: ahora.toISOString(),
-    timeMax: en7dias.toISOString(),
+    timeMax: enRangoDias.toISOString(),
     singleEvents: 'true',
     orderBy: 'startTime',
-    maxResults: '25'
+    maxResults: '50'
   });
 
   const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?${params.toString()}`;
@@ -1905,9 +1924,12 @@ async function obtenerEventosDeCalendario(calendarId, tipo) {
       titulo: evento.summary || '(sin título)',
       descripcion: evento.description || '',
       fecha: evento.start?.date || evento.start?.dateTime,
-      esFechaCompleta: !!evento.start?.date, // true = evento de "todo el día" (formato YYYY-MM-DD)
+      esFechaCompleta: !!evento.start?.date,
       colorId: evento.colorId,
-      tipoOrigen: tipo
+      tipoOrigen: tipo,
+      // La categoría (aniversario/cumpleaños/cívica/otro) viaja en extendedProperties,
+      // que es más confiable que leerla del título o la descripción.
+      categoria: evento.extendedProperties?.private?.categoria || null
     }));
   } catch (error) {
     console.error(`Error de red consultando calendario (${tipo}):`, error);
@@ -1920,6 +1942,13 @@ const COLOR_POR_ID_GOOGLE = {
   '5': '#e0a400',  // media / amarillo
   '8': '#94a3b8',  // baja / gris
   '10': '#1a7a3e'  // fecha importante / verde
+};
+
+const INFO_CATEGORIA = {
+  aniversario: { emoji: '🎉', etiqueta: 'Aniversario' },
+  cumpleanos: { emoji: '🎂', etiqueta: 'Cumpleaños' },
+  civica: { emoji: '🏛', etiqueta: 'Fecha cívica' },
+  otro: { emoji: '📌', etiqueta: 'Fecha importante' }
 };
 
 // Convierte una fecha de Google Calendar a un objeto Date LOCAL, sin desfase de zona horaria.
@@ -1938,6 +1967,7 @@ let filtroEventosActivo = 'todos';
 
 async function cargarProximosEventos() {
   const contenedor = document.getElementById('listaProximosEventos');
+  contenedor.innerHTML = '<div class="vacioColumna">Cargando eventos...</div>';
 
   const [eventosTareas, eventosFechas] = await Promise.all([
     obtenerEventosDeCalendario(window._CALENDAR_ID_TAREAS, 'tarea'),
@@ -1947,11 +1977,9 @@ async function cargarProximosEventos() {
   const todosLosEventos = [...eventosTareas, ...eventosFechas]
     .filter(e => e.fecha)
     .map(e => {
-      // El tipo se determina por el calendario de origen (Tareas vs Fechas importantes),
-      // que es 100% confiable. El color de Google Calendar NO se usa para esto porque
-      // los eventos recurrentes (fechas importantes anuales) a veces no devuelven
-      // su colorId correctamente en la API, lo que causaba etiquetas incorrectas.
-      const tipo = e.tipoOrigen;
+      // Para tareas, el "tipo" (usado en el filtro) es siempre 'tarea'.
+      // Para fechas importantes, usamos su categoría específica (aniversario/cumpleaños/cívica/otro).
+      const tipo = e.tipoOrigen === 'tarea' ? 'tarea' : (e.categoria || 'otro');
       return { ...e, tipo };
     });
 
@@ -1965,10 +1993,19 @@ async function cargarProximosEventos() {
 
 function cambiarFiltroEventos(tipo) {
   filtroEventosActivo = tipo;
-  document.querySelectorAll('.chipFiltro').forEach(chip => {
+  document.querySelectorAll('.chipFiltro[data-filtro]').forEach(chip => {
     chip.classList.toggle('activo', chip.dataset.filtro === tipo);
   });
   pintarListaEventos();
+}
+
+function cambiarRangoDias(dias) {
+  rangoDiasActivo = dias;
+  document.querySelectorAll('.chipFiltro[data-rango]').forEach(chip => {
+    chip.classList.toggle('activo', Number(chip.dataset.rango) === dias);
+  });
+  document.getElementById('tituloPanelCalendario').textContent = `📅 Próximos ${dias} días`;
+  cargarProximosEventos();
 }
 
 function pintarListaEventos() {
@@ -1980,16 +2017,23 @@ function pintarListaEventos() {
   }
 
   if (lista.length === 0) {
-    contenedor.innerHTML = '<div class="vacioColumna">No hay eventos en los próximos 7 días</div>';
+    contenedor.innerHTML = `<div class="vacioColumna">No hay eventos en los próximos ${rangoDiasActivo} días</div>`;
     return;
   }
 
   contenedor.innerHTML = '';
 
-  lista.forEach((evento, idx) => {
+  lista.forEach((evento) => {
     const fecha = parsearFechaEventoGoogle(evento.fecha, evento.esFechaCompleta);
     const diaTexto = fecha.toLocaleDateString('es-PE', { weekday: 'short', day: '2-digit', month: 'short' });
-    const color = COLOR_POR_ID_GOOGLE[evento.colorId] || (evento.tipo === 'fecha' ? '#1a7a3e' : '#94a3b8');
+    const esTarea = evento.tipo === 'tarea';
+    const color = esTarea
+      ? (COLOR_POR_ID_GOOGLE[evento.colorId] || '#94a3b8')
+      : '#1a7a3e';
+
+    const infoTipo = esTarea
+      ? { emoji: '📋', etiqueta: 'Tarea' }
+      : (INFO_CATEGORIA[evento.tipo] || INFO_CATEGORIA.otro);
 
     const fila = document.createElement('div');
     fila.className = 'eventoProximo';
@@ -1997,14 +2041,14 @@ function pintarListaEventos() {
 
     const detalleTexto = evento.descripcion
       ? evento.descripcion
-      : (evento.tipo === 'fecha' ? 'Fecha importante del club.' : 'Sin descripción adicional.');
+      : (esTarea ? 'Sin descripción adicional.' : 'Fecha importante del club.');
 
     fila.innerHTML = `
       <div class="filaPrincipalEvento">
         <span class="barraColor" style="background:${color}"></span>
         <span class="diaEvento">${diaTexto}</span>
         <span class="tituloEvento">${escaparHtml(evento.titulo)}</span>
-        <span class="tipoEvento">${evento.tipo === 'fecha' ? '🎉 Fecha importante' : '📋 Tarea'}</span>
+        <span class="tipoEvento">${infoTipo.emoji} ${infoTipo.etiqueta}</span>
       </div>
       <div class="detalleEvento">${escaparHtml(detalleTexto)}</div>
     `;
@@ -2046,6 +2090,7 @@ function cerrarCalendarioCompleto() {
 
 function abrirModalFechaImportante() {
   document.getElementById('fechaImportanteTitulo').value = '';
+  document.getElementById('fechaImportanteCategoria').value = 'aniversario';
   document.getElementById('fechaImportanteDescripcion').value = '';
   document.getElementById('fechaImportanteFecha').value = '';
   document.getElementById('fechaImportanteRecurrente').checked = true;
@@ -2058,6 +2103,7 @@ function cerrarModalFechaImportante() {
 
 async function guardarFechaImportante() {
   const titulo = document.getElementById('fechaImportanteTitulo').value.trim();
+  const categoria = document.getElementById('fechaImportanteCategoria').value;
   const descripcion = document.getElementById('fechaImportanteDescripcion').value.trim();
   const fechaStr = document.getElementById('fechaImportanteFecha').value;
   const recurrenteAnual = document.getElementById('fechaImportanteRecurrente').checked;
@@ -2072,6 +2118,7 @@ async function guardarFechaImportante() {
   try {
     await addDoc(collection(window._db, 'fechasImportantes'), {
       titulo,
+      categoria,
       descripcion,
       fecha: new Date(fechaStr + 'T00:00:00'),
       recurrenteAnual,
@@ -2094,7 +2141,6 @@ function aplicarFiltroResumen(tipo) {
   filtroResumenActivo = tipo;
   const aviso = document.getElementById('avisoFiltroResumen');
   const textos = {
-    completadasSemana: 'Completadas esta semana',
     pendientes: 'Pendientes totales',
     vencidas: 'Vencidas',
     porVencer: 'Vencen en 3 días'
@@ -2108,6 +2154,15 @@ function aplicarFiltroResumen(tipo) {
   }
 
   pintarKanban();
+
+  // Llevamos la vista hacia el Kanban y lo resaltamos brevemente, para que se note el efecto del filtro
+  if (tipo) {
+    const toolbar = document.getElementById('toolbarTareas');
+    toolbar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    toolbar.style.transition = 'background 0.3s';
+    toolbar.style.background = '#fff1de';
+    setTimeout(() => { toolbar.style.background = 'transparent'; }, 1200);
+  }
 }
 </script>
 
