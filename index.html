@@ -25,7 +25,7 @@
 
   body {
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    background: var(--gris-fondo);
+    background: linear-gradient(165deg, #f3e6ec 0%, #f4f1f6 35%, #f7ede2 100%);
     color: var(--texto);
     min-height: 100vh;
   }
@@ -684,20 +684,17 @@
     margin-bottom: 8px;
   }
 
-  @media (max-width: 700px) {
-    .panelResumen { grid-template-columns: repeat(2, 1fr); }
-  }
-
   .fichaResumen {
     background: var(--blanco);
     border: 1.5px solid var(--gris-linea);
     border-radius: 8px;
     padding: 8px 12px;
     display: flex;
-    align-items: baseline;
-    gap: 8px;
+    flex-direction: column;
+    gap: 2px;
     cursor: pointer;
     transition: border-color 0.15s;
+    min-width: 0; /* permite que el texto se achique sin desbordar en pantallas chicas */
   }
 
   .fichaResumen:hover { border-color: var(--vino-chankas); }
@@ -711,10 +708,19 @@
   .fichaResumen .etiquetaResumen {
     font-size: 11px;
     color: var(--texto-suave);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .fichaResumen.resumenAlerta .numeroResumen { color: var(--rojo-alerta); }
   .fichaResumen.resumenAviso .numeroResumen { color: #b35f00; }
+
+  @media (max-width: 480px) {
+    .fichaResumen { padding: 6px 8px; }
+    .fichaResumen .numeroResumen { font-size: 15px; }
+    .fichaResumen .etiquetaResumen { font-size: 9.5px; }
+  }
 </style>
 </head>
 <body>
