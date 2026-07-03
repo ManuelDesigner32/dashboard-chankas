@@ -242,21 +242,72 @@
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 14px;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1.5px solid var(--gris-linea);
   }
 
   .panelCalendarioHeader h3 {
-    font-size: 15px;
+    font-size: 16px;
     color: var(--vino-chankas);
+  }
+
+  .accionesCalendario {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .segmentado {
+    display: flex;
+    background: var(--gris-fondo);
+    border-radius: 8px;
+    padding: 3px;
+    gap: 2px;
+  }
+
+  .segmentoBtn {
+    background: none;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--texto-suave);
+    cursor: pointer;
+  }
+
+  .segmentoBtn.activo {
+    background: var(--vino-chankas);
+    color: white;
+  }
+
+  .filaFiltrosCategoria {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+
+  .etiquetaFilaFiltro {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--texto-suave);
+    white-space: nowrap;
   }
 
   .leyendaCalendario {
     display: flex;
-    gap: 14px;
+    gap: 16px;
     flex-wrap: wrap;
     font-size: 11px;
     color: var(--texto-suave);
+    padding-top: 12px;
+    margin-top: 4px;
+    border-top: 1px dashed var(--gris-linea);
   }
 
   .leyendaCalendario span {
@@ -794,32 +845,33 @@
     <div class="panelCalendario">
       <div class="panelCalendarioHeader">
         <h3 id="tituloPanelCalendario">📅 Próximos 7 días</h3>
-        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-          <div class="leyendaCalendario">
-            <span><i class="puntoLeyenda" style="background:#d64545"></i> Alta</span>
-            <span><i class="puntoLeyenda" style="background:#e0a400"></i> Media</span>
-            <span><i class="puntoLeyenda" style="background:#94a3b8"></i> Baja</span>
-            <span><i class="puntoLeyenda" style="background:#1a7a3e"></i> Fecha importante</span>
+        <div class="accionesCalendario">
+          <div class="segmentado">
+            <button type="button" class="segmentoBtn activo" data-rango="7" onclick="cambiarRangoDias(7)">7 días</button>
+            <button type="button" class="segmentoBtn" data-rango="15" onclick="cambiarRangoDias(15)">15 días</button>
           </div>
+          <button type="button" class="btnSecundario" style="width:auto; padding:8px 12px; font-size:12px;" onclick="abrirModalFechaImportante()">+ Fecha importante</button>
+          <button type="button" class="btnSecundario" style="width:auto; padding:8px 12px; font-size:12px;" onclick="abrirCalendarioCompleto()">🗓 Ver mes</button>
         </div>
       </div>
 
-      <div class="filtrosEventos">
-        <button type="button" class="chipFiltro activo" data-filtro="todos" onclick="cambiarFiltroEventos('todos')">Todos</button>
-        <button type="button" class="chipFiltro" data-filtro="tarea" onclick="cambiarFiltroEventos('tarea')">📋 Tareas</button>
-        <button type="button" class="chipFiltro" data-filtro="aniversario" onclick="cambiarFiltroEventos('aniversario')">🎉 Aniversarios</button>
-        <button type="button" class="chipFiltro" data-filtro="cumpleanos" onclick="cambiarFiltroEventos('cumpleanos')">🎂 Cumpleaños</button>
-        <button type="button" class="chipFiltro" data-filtro="civica" onclick="cambiarFiltroEventos('civica')">🏛 Cívicas</button>
-        <button type="button" class="chipFiltro" data-filtro="otro" onclick="cambiarFiltroEventos('otro')">📌 Otras</button>
+      <div class="filaFiltrosCategoria">
+        <span class="etiquetaFilaFiltro">Filtrar:</span>
+        <div class="filtrosEventos">
+          <button type="button" class="chipFiltro activo" data-filtro="todos" onclick="cambiarFiltroEventos('todos')">Todos</button>
+          <button type="button" class="chipFiltro" data-filtro="tarea" onclick="cambiarFiltroEventos('tarea')">📋 Tareas</button>
+          <button type="button" class="chipFiltro" data-filtro="aniversario" onclick="cambiarFiltroEventos('aniversario')">🎉 Aniversarios</button>
+          <button type="button" class="chipFiltro" data-filtro="cumpleanos" onclick="cambiarFiltroEventos('cumpleanos')">🎂 Cumpleaños</button>
+          <button type="button" class="chipFiltro" data-filtro="civica" onclick="cambiarFiltroEventos('civica')">🏛 Cívicas</button>
+          <button type="button" class="chipFiltro" data-filtro="otro" onclick="cambiarFiltroEventos('otro')">📌 Otras</button>
+        </div>
       </div>
 
-      <div class="filtrosEventos" style="margin-top:-4px;">
-        <span style="font-size:12px; color:var(--texto-suave);">Ver:</span>
-        <button type="button" class="chipFiltro activo" data-rango="7" onclick="cambiarRangoDias(7)">7 días</button>
-        <button type="button" class="chipFiltro" data-rango="15" onclick="cambiarRangoDias(15)">15 días</button>
-        <div style="flex:1;"></div>
-        <button type="button" class="btnSecundario" style="width:auto; padding:7px 12px; font-size:12px;" onclick="abrirModalFechaImportante()">+ Fecha importante</button>
-        <button type="button" class="btnSecundario" style="width:auto; padding:7px 12px; font-size:12px;" onclick="abrirCalendarioCompleto()">🗓 Ver mes completo</button>
+      <div class="leyendaCalendario">
+        <span><i class="puntoLeyenda" style="background:#d64545"></i> Alta</span>
+        <span><i class="puntoLeyenda" style="background:#e0a400"></i> Media</span>
+        <span><i class="puntoLeyenda" style="background:#94a3b8"></i> Baja</span>
+        <span><i class="puntoLeyenda" style="background:#1a7a3e"></i> Fecha importante</span>
       </div>
 
       <div id="listaProximosEventos" class="listaProximosEventos">
@@ -2017,8 +2069,8 @@ function cambiarFiltroEventos(tipo) {
 
 function cambiarRangoDias(dias) {
   rangoDiasActivo = dias;
-  document.querySelectorAll('.chipFiltro[data-rango]').forEach(chip => {
-    chip.classList.toggle('activo', Number(chip.dataset.rango) === dias);
+  document.querySelectorAll('.segmentoBtn[data-rango]').forEach(btn => {
+    btn.classList.toggle('activo', Number(btn.dataset.rango) === dias);
   });
   document.getElementById('tituloPanelCalendario').textContent = `📅 Próximos ${dias} días`;
   cargarProximosEventos();
