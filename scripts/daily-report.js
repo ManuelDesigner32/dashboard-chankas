@@ -95,7 +95,7 @@ async function generarRecordatorioDiario() {
 
     await enviarNotificacion(
       tokens,
-      '🔔 Recordatorio diario - Dashboard Chankas',
+      '🔔 Recordatorio diario - Marketing Chankas',
       `Tienes ${partes.join(' y ')}.`
     );
   }
