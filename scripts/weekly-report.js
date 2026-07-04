@@ -30,16 +30,28 @@ function diasHastaVencer(fechaLimite) {
   return Math.round((f - hoy) / (1000 * 60 * 60 * 24));
 }
 
-async function enviarNotificacion(token, titulo, cuerpo) {
-  if (!token) return;
-  try {
-    await messaging.send({
-      token,
-      notification: { title: titulo, body: cuerpo }
-    });
-    console.log(`Reporte enviado: "${titulo}" -> ${cuerpo}`);
-  } catch (err) {
-    console.log(`No se pudo enviar reporte (token puede estar vencido): ${err.message}`);
+function obtenerTokensDeUsuario(usuario) {
+  const tokens = new Set();
+  if (Array.isArray(usuario.fcmTokens)) {
+    usuario.fcmTokens.forEach(t => t && tokens.add(t));
+  }
+  if (usuario.fcmToken) tokens.add(usuario.fcmToken);
+  return Array.from(tokens);
+}
+
+async function enviarNotificacion(tokens, titulo, cuerpo) {
+  const listaTokens = Array.isArray(tokens) ? tokens : [tokens];
+  for (const token of listaTokens) {
+    if (!token) continue;
+    try {
+      await messaging.send({
+        token,
+        notification: { title: titulo, body: cuerpo }
+      });
+      console.log(`Reporte enviado a un dispositivo: "${titulo}" -> ${cuerpo}`);
+    } catch (err) {
+      console.log(`No se pudo enviar a un dispositivo (token puede estar vencido): ${err.message}`);
+    }
   }
 }
 
@@ -67,14 +79,16 @@ async function generarReporteSemanal() {
   for (const docSnap of snapUsuarios.docs) {
     const usuario = docSnap.data();
     if (usuario.activo === false) continue;
-    if (!usuario.fcmToken) continue;
+
+    const tokens = obtenerTokensDeUsuario(usuario);
+    if (tokens.length === 0) continue;
 
     const stats = tareasPorUsuario[docSnap.id] || { pendientes: 0, vencidas: 0 };
 
     if (stats.pendientes === 0) {
       await enviarNotificacion(
-        usuario.fcmToken,
-        '📅 Resumen semanal - Dashboard Chankas',
+        tokens,
+        '📅 Resumen semanal - Marketing Chankas',
         '¡Vas al día! No tienes tareas pendientes esta semana.'
       );
     } else {
@@ -83,8 +97,8 @@ async function generarReporteSemanal() {
         partes.push(`${stats.vencidas} vencida${stats.vencidas === 1 ? '' : 's'} ⚠️`);
       }
       await enviarNotificacion(
-        usuario.fcmToken,
-        '📅 Resumen semanal - Dashboard Chankas',
+        tokens,
+        '📅 Resumen semanal - Marketing Chankas',
         `Tienes ${partes.join(' y ')}. ¡Buena semana!`
       );
     }
