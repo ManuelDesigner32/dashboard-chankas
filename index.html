@@ -29,6 +29,11 @@
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
+  html, body {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+
   body {
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     background:
@@ -164,6 +169,12 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.25);
   }
 
   .appHeader .marca {
@@ -186,8 +197,15 @@
   .usuarioInfo {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     font-size: 14px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  @media (max-width: 640px) {
+    .usuarioInfo { gap: 6px; }
+    .usuarioInfo .btnSalir { padding: 6px 9px; font-size: 12px; }
   }
 
   .avatarChip {
@@ -1139,6 +1157,13 @@
   window._CALENDAR_ID_TAREAS = "97cd93ca8ba45f52e489a863fadd71953a07b6f0f081262afb0e73b2a469f4d9@group.calendar.google.com";
   window._CALENDAR_ID_FECHAS = "4154d0387a1f406830c750d693543a6a71e50451dbffe7e6ce5c4e77db9a2819@group.calendar.google.com";
   window._VAPID_KEY = "BI2Wgm7aZLSuic374k4KivLGonmH4rbklpeyTrHWFEOjRTPcYgR4nPrn3BaVGJICngaSLS7KHe7jOVlHSi9g9R4";
+
+  // ⚠️ Token de GitHub para disparar el envío instantáneo de avisos.
+  // Reemplaza "PEGA_TU_TOKEN_AQUI" por el token que generes (ver instrucciones).
+  // Este token queda visible en el código público — por eso debe tener el MÍNIMO permiso posible
+  // (solo "Actions: Read and write" en ESTE repositorio, nada más).
+  window._GITHUB_TOKEN = "PEGA_TU_TOKEN_AQUI";
+  window._GITHUB_REPO = "ManuelDesigner32/dashboard-chankas";
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
@@ -2277,10 +2302,43 @@ async function enviarAviso() {
       creadoEn: serverTimestamp()
     });
     cerrarModalAviso();
-    alert('Aviso guardado. Llegará como notificación en los próximos 15 minutos (o fuerza "Run workflow" en GitHub Actions para que llegue ya mismo).');
+
+    const disparoOk = await dispararSincronizacionInstantanea();
+    if (disparoOk) {
+      alert('Aviso guardado y enviado. Debería llegar como notificación en unos 20-30 segundos.');
+    } else {
+      alert('Aviso guardado. Llegará como notificación en los próximos 15 minutos (no se pudo forzar el envío instantáneo).');
+    }
   } catch (error) {
     console.error(error);
     alert('Hubo un error al guardar el aviso.');
+  }
+}
+
+// ===================== DISPARAR GITHUB ACTIONS AL INSTANTE =====================
+// Esto le pide a GitHub que ejecute AHORA el workflow que revisa y envía notificaciones,
+// en vez de esperar hasta los próximos 15 minutos.
+
+async function dispararSincronizacionInstantanea() {
+  if (!window._GITHUB_TOKEN) return false;
+
+  try {
+    const respuesta = await fetch(
+      `https://api.github.com/repos/${window._GITHUB_REPO}/actions/workflows/sincronizar-calendario.yml/dispatches`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${window._GITHUB_TOKEN}`,
+          'Accept': 'application/vnd.github+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ ref: 'main' })
+      }
+    );
+    return respuesta.status === 204; // GitHub responde 204 (sin contenido) si aceptó la orden
+  } catch (error) {
+    console.error('No se pudo disparar el workflow al instante:', error);
+    return false;
   }
 }
 
