@@ -52,8 +52,12 @@ async function enviarNotificacion(tokens, titulo, cuerpo) {
         token,
         notification: {
           title: titulo,
-          body: cuerpo,
-          icon: 'https://manueldesigner32.github.io/dashboard-chankas/favicon.png'
+          body: cuerpo
+        },
+        webpush: {
+          notification: {
+            icon: 'https://manueldesigner32.github.io/dashboard-chankas/icon-192.png'
+          }
         }
       });
       console.log(`Notificación enviada a un dispositivo: "${titulo}"`);
