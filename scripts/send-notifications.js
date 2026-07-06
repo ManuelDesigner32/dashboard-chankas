@@ -34,20 +34,32 @@ function diasHastaVencer(fechaLimite) {
   return Math.round((f - hoy) / (1000 * 60 * 60 * 24));
 }
 
-async function enviarNotificacion(token, titulo, cuerpo) {
-  if (!token) return;
-  try {
-    await messaging.send({
-      token,
-      notification: {
-        title: titulo,
-        body: cuerpo,
-        icon: 'https://manueldesigner32.github.io/dashboard-chankas/favicon.png'
-      }
-    });
-    console.log(`Notificación enviada: "${titulo}"`);
-  } catch (err) {
-    console.log(`No se pudo enviar notificación (token puede estar vencido): ${err.message}`);
+function obtenerTokensDeUsuario(usuario) {
+  const tokens = new Set();
+  if (Array.isArray(usuario.fcmTokens)) {
+    usuario.fcmTokens.forEach(t => t && tokens.add(t));
+  }
+  if (usuario.fcmToken) tokens.add(usuario.fcmToken); // compatibilidad con el campo viejo (un solo dispositivo)
+  return Array.from(tokens);
+}
+
+async function enviarNotificacion(tokens, titulo, cuerpo) {
+  const listaTokens = Array.isArray(tokens) ? tokens : [tokens];
+  for (const token of listaTokens) {
+    if (!token) continue;
+    try {
+      await messaging.send({
+        token,
+        notification: {
+          title: titulo,
+          body: cuerpo,
+          icon: 'https://manueldesigner32.github.io/dashboard-chankas/favicon.png'
+        }
+      });
+      console.log(`Notificación enviada a un dispositivo: "${titulo}"`);
+    } catch (err) {
+      console.log(`No se pudo enviar a un dispositivo (token puede estar vencido): ${err.message}`);
+    }
   }
 }
 
@@ -65,7 +77,9 @@ async function procesarNotificaciones() {
     const tareaId = docSnap.id;
     const usuarioAsignado = usuarios[tarea.asignadoA];
 
-    if (!usuarioAsignado || !usuarioAsignado.fcmToken) continue;
+    if (!usuarioAsignado) continue;
+    const tokens = obtenerTokensDeUsuario(usuarioAsignado);
+    if (tokens.length === 0) continue;
     if (tarea.estado === 'completada') continue;
 
     const actualizaciones = {};
@@ -73,7 +87,7 @@ async function procesarNotificaciones() {
     // 1. Notificar nueva asignación (solo una vez)
     if (!tarea.notificadoAsignacion) {
       await enviarNotificacion(
-        usuarioAsignado.fcmToken,
+        tokens,
         '📋 Nueva tarea asignada',
         `${tarea.titulo} — asignada por ${tarea.asignadoPorNombre || 'el equipo'}`
       );
@@ -85,29 +99,17 @@ async function procesarNotificaciones() {
       const dias = diasHastaVencer(tarea.fechaLimite);
 
       if (dias === 3 && !tarea.notificado3Dias) {
-        await enviarNotificacion(
-          usuarioAsignado.fcmToken,
-          '⏰ Tarea vence en 3 días',
-          tarea.titulo
-        );
+        await enviarNotificacion(tokens, '⏰ Tarea vence en 3 días', tarea.titulo);
         actualizaciones.notificado3Dias = true;
       }
 
       if (dias === 1 && !tarea.notificado1Dia) {
-        await enviarNotificacion(
-          usuarioAsignado.fcmToken,
-          '⏰ Tarea vence mañana',
-          tarea.titulo
-        );
+        await enviarNotificacion(tokens, '⏰ Tarea vence mañana', tarea.titulo);
         actualizaciones.notificado1Dia = true;
       }
 
       if (dias === 0 && !tarea.notificadoHoy) {
-        await enviarNotificacion(
-          usuarioAsignado.fcmToken,
-          '🔴 Tarea vence hoy',
-          tarea.titulo
-        );
+        await enviarNotificacion(tokens, '🔴 Tarea vence hoy', tarea.titulo);
         actualizaciones.notificadoHoy = true;
       }
     }
@@ -118,12 +120,52 @@ async function procesarNotificaciones() {
   }
 }
 
-procesarNotificaciones()
+// ===================== AVISOS DEL ADMIN =====================
+
+async function procesarAvisos() {
+  const snapUsuarios = await db.collection('usuarios').get();
+  const usuarios = {};
+  snapUsuarios.forEach(d => { usuarios[d.id] = { id: d.id, ...d.data() }; });
+
+  const snapAvisos = await db.collection('avisos').where('enviado', '==', false).get();
+
+  for (const docSnap of snapAvisos.docs) {
+    const aviso = docSnap.data();
+    let tokens = [];
+
+    if (aviso.destinatarioId === 'todos') {
+      Object.values(usuarios).forEach(u => {
+        if (u.activo === false) return;
+        tokens.push(...obtenerTokensDeUsuario(u));
+      });
+    } else {
+      const usuario = usuarios[aviso.destinatarioId];
+      if (usuario) tokens = obtenerTokensDeUsuario(usuario);
+    }
+
+    if (tokens.length > 0) {
+      await enviarNotificacion(
+        tokens,
+        `📢 Aviso de ${aviso.creadoPorNombre || 'la directiva'}`,
+        aviso.mensaje
+      );
+    }
+
+    await docSnap.ref.update({ enviado: true });
+  }
+}
+
+async function main() {
+  await procesarNotificaciones();
+  await procesarAvisos();
+}
+
+main()
   .then(() => {
-    console.log('--- Notificaciones procesadas ---');
+    console.log('--- Notificaciones y avisos procesados ---');
     process.exit(0);
   })
   .catch(err => {
-    console.error('Error procesando notificaciones:', err);
+    console.error('Error procesando notificaciones/avisos:', err);
     process.exit(1);
   });
