@@ -840,7 +840,6 @@
     </div>
     <div class="usuarioInfo">
       <button class="btnSalir" id="btnInstalarApp" onclick="instalarPWA()" style="display:none; background:var(--naranja-chankas); color:var(--vino-oscuro); font-weight:800;">📲 Instalar app</button>
-      <button class="btnSalir" id="btnEnviarAviso" onclick="abrirModalAviso()" style="display:none;">📢 Aviso</button>
       <button class="btnSalir" id="btnGestionUsuarios" onclick="abrirModalUsuarios()" style="display:none;">👥 Usuarios</button>
       <div class="avatarChip" id="avatarUsuarioActual"></div>
       <span id="nombreUsuarioActual"></span>
@@ -1106,30 +1105,6 @@
   </div>
 </div>
 
-<!-- ===================== MODAL ENVIAR AVISO (SOLO ADMIN) ===================== -->
-<div class="overlay" id="overlayAviso">
-  <div class="modal" style="max-width:420px;">
-    <h3>📢 Enviar aviso</h3>
-    <p style="font-size:13px; color:var(--texto-suave); margin-bottom:16px;">
-      Se enviará como notificación push. Llega en un máximo de 15 minutos (o al instante si fuerzas la sincronización en GitHub Actions).
-    </p>
-    <div class="campo">
-      <label>Destinatario</label>
-      <select id="avisoDestinatario">
-        <option value="todos">👥 Todo el equipo</option>
-      </select>
-    </div>
-    <div class="campo">
-      <label>Mensaje</label>
-      <textarea id="avisoMensaje" placeholder="ej. Reunión hoy a las 7pm en la cancha" maxlength="200"></textarea>
-    </div>
-    <div class="accionesModal">
-      <button class="btnSecundario" onclick="cerrarModalAviso()">Cancelar</button>
-      <button class="btnPrimario" onclick="enviarAviso()">Enviar</button>
-    </div>
-  </div>
-</div>
-
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -1137,9 +1112,6 @@
     getFirestore, collection, doc, getDocs, getDoc, addDoc, updateDoc, deleteDoc,
     onSnapshot, query, where, serverTimestamp, arrayUnion
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-  import {
-    getMessaging, getToken, onMessage
-  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
 
   // ------------- CONFIGURACIÓN FIREBASE -------------
   const firebaseConfig = {
@@ -1155,7 +1127,6 @@
   window._GOOGLE_CALENDAR_API_KEY = "AIzaSyC_-3Ut5XEnfjbttzAJ81ygQo7aP6Y3hnc";
   window._CALENDAR_ID_TAREAS = "97cd93ca8ba45f52e489a863fadd71953a07b6f0f081262afb0e73b2a469f4d9@group.calendar.google.com";
   window._CALENDAR_ID_FECHAS = "4154d0387a1f406830c750d693543a6a71e50451dbffe7e6ce5c4e77db9a2819@group.calendar.google.com";
-  window._VAPID_KEY = "BI2Wgm7aZLSuic374k4KivLGonmH4rbklpeyTrHWFEOjRTPcYgR4nPrn3BaVGJICngaSLS7KHe7jOVlHSi9g9R4";
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
@@ -1163,22 +1134,6 @@
   // Exponemos lo necesario al scope global para los onclick del HTML
   window._db = db;
   window._fs = { collection, doc, getDocs, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, serverTimestamp, arrayUnion };
-
-  // Firebase Messaging (notificaciones push) — se activa solo si el navegador lo soporta
-  try {
-    const messaging = getMessaging(app);
-    window._messaging = messaging;
-    window._getFcmToken = () => getToken(messaging, { vapidKey: window._VAPID_KEY, serviceWorkerRegistration: window._swRegistration });
-    onMessage(messaging, (payload) => {
-      // Notificación recibida con la app abierta en primer plano
-      console.log('Notificación en primer plano:', payload);
-      if (payload.notification) {
-        new Notification(payload.notification.title, { body: payload.notification.body, icon: payload.notification.icon });
-      }
-    });
-  } catch (e) {
-    console.log('Firebase Messaging no disponible en este navegador:', e.message);
-  }
 
   // Arrancamos la lógica de la app una vez Firebase está listo
   window.dispatchEvent(new Event('firebaseListo'));
@@ -1333,51 +1288,23 @@ async function mostrarApp() {
 
   if (usuarioActual.rol === 'admin') {
     document.getElementById('btnGestionUsuarios').style.display = 'inline-block';
-    document.getElementById('btnEnviarAviso').style.display = 'inline-block';
   }
 
   await cargarUsuarios();
   escucharTareasEnTiempoReal();
   cargarProximosEventos();
-  activarNotificacionesPush();
+  registrarServiceWorkerPWA();
 }
 
-// ===================== NOTIFICACIONES PUSH =====================
+// ===================== SERVICE WORKER (SOLO PARA QUE LA APP SE PUEDA INSTALAR) =====================
 
 async function activarNotificacionesPush() {
-  if (!('serviceWorker' in navigator) || !('Notification' in window)) {
-    console.log('Este navegador no soporta notificaciones push.');
-    return;
-  }
-
+async function registrarServiceWorkerPWA() {
+  if (!('serviceWorker' in navigator)) return;
   try {
-    // Registramos el service worker (necesario para recibir notificaciones en segundo plano)
-    const registro = await navigator.serviceWorker.register('/dashboard-chankas/firebase-messaging-sw.js');
-    window._swRegistration = registro;
-
-    // Pedimos permiso al usuario (el navegador muestra el diálogo nativo)
-    const permiso = await Notification.requestPermission();
-    if (permiso !== 'granted') {
-      console.log('El usuario no dio permiso para notificaciones.');
-      return;
-    }
-
-    // Obtenemos el token único de este navegador/dispositivo
-    const token = await window._getFcmToken();
-    if (!token) return;
-
-    // Lo guardamos en Firestore como parte de una LISTA de tokens (uno por dispositivo),
-    // así la persona recibe notificaciones tanto en su celular como en su computadora,
-    // en vez de que el último dispositivo "pise" al anterior.
-    const { doc, updateDoc, arrayUnion } = window._fs;
-    await updateDoc(doc(window._db, 'usuarios', usuarioActual.id), {
-      fcmTokens: arrayUnion(token),
-      fcmTokenActualizado: new Date()
-    });
-
-    console.log('Notificaciones push activadas correctamente.');
+    await navigator.serviceWorker.register('/dashboard-chankas/firebase-messaging-sw.js');
   } catch (error) {
-    console.log('No se pudo activar las notificaciones push:', error.message);
+    console.log('No se pudo registrar el service worker:', error.message);
   }
 }
 
@@ -1387,10 +1314,8 @@ async function cargarUsuarios() {
   usuariosCache = {};
   const selectAsignado = document.getElementById('tareaAsignadoA');
   const selectFiltro = document.getElementById('filtroUsuario');
-  const selectAviso = document.getElementById('avisoDestinatario');
   selectAsignado.innerHTML = '';
   selectFiltro.innerHTML = '<option value="">Todos los usuarios</option>';
-  if (selectAviso) selectAviso.innerHTML = '<option value="todos">👥 Todo el equipo</option>';
 
   snap.forEach(docSnap => {
     const datos = docSnap.data();
@@ -1406,13 +1331,6 @@ async function cargarUsuarios() {
     optFiltro.value = docSnap.id;
     optFiltro.textContent = datos.nombre;
     selectFiltro.appendChild(optFiltro);
-
-    if (selectAviso) {
-      const optAviso = document.createElement('option');
-      optAviso.value = docSnap.id;
-      optAviso.textContent = datos.nombre;
-      selectAviso.appendChild(optAviso);
-    }
   });
 }
 
@@ -2259,45 +2177,6 @@ async function guardarFechaImportante() {
   } catch (error) {
     console.error(error);
     alert('Hubo un error al guardar la fecha importante.');
-  }
-}
-
-// ===================== ENVIAR AVISO (SOLO ADMIN) =====================
-
-function abrirModalAviso() {
-  document.getElementById('avisoDestinatario').value = 'todos';
-  document.getElementById('avisoMensaje').value = '';
-  document.getElementById('overlayAviso').classList.add('visible');
-}
-
-function cerrarModalAviso() {
-  document.getElementById('overlayAviso').classList.remove('visible');
-}
-
-async function enviarAviso() {
-  const destinatarioId = document.getElementById('avisoDestinatario').value;
-  const mensaje = document.getElementById('avisoMensaje').value.trim();
-
-  if (!mensaje) {
-    alert('Escribe el mensaje del aviso.');
-    return;
-  }
-
-  const { collection, addDoc, serverTimestamp } = window._fs;
-
-  try {
-    await addDoc(collection(window._db, 'avisos'), {
-      destinatarioId, // 'todos' o el id de un usuario específico
-      mensaje,
-      enviado: false,
-      creadoPorNombre: usuarioActual.nombre,
-      creadoEn: serverTimestamp()
-    });
-    cerrarModalAviso();
-    alert('Aviso guardado. Llegará como notificación en los próximos 5 minutos (o fuerza "Run workflow" en GitHub Actions para que llegue ya mismo).');
-  } catch (error) {
-    console.error(error);
-    alert('Hubo un error al guardar el aviso.');
   }
 }
 
