@@ -442,6 +442,95 @@
     margin-bottom: 12px;
   }
 
+  /* ---------- PANEL DE FOTOS ---------- */
+  .panelFotos {
+    background: var(--blanco);
+    border-radius: var(--radio);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    border: 1.5px solid var(--gris-linea);
+  }
+
+  .listaLinksFotos {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .fichaLinkFoto {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: var(--gris-fondo);
+    flex-wrap: wrap;
+  }
+
+  .fichaLinkFoto.usado {
+    opacity: 0.6;
+  }
+
+  .fichaLinkFoto .fechaLinkFoto {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--texto-suave);
+    text-transform: uppercase;
+    min-width: 58px;
+  }
+
+  .fichaLinkFoto .infoLinkFoto {
+    flex: 1;
+    min-width: 180px;
+  }
+
+  .fichaLinkFoto .descripcionLinkFoto {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .fichaLinkFoto .metaLinkFoto {
+    font-size: 11px;
+    color: var(--texto-suave);
+    margin-top: 2px;
+  }
+
+  .fichaLinkFoto a.abrirLinkFoto {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--vino-chankas);
+    text-decoration: none;
+    padding: 6px 12px;
+    border: 1.5px solid var(--vino-chankas);
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .fichaLinkFoto a.abrirLinkFoto:hover {
+    background: var(--vino-chankas);
+    color: white;
+  }
+
+  .badgeEstadoFoto {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    cursor: pointer;
+    white-space: nowrap;
+    border: none;
+  }
+
+  .badgeEstadoFoto.pendiente {
+    background: #fff1de;
+    color: #b35f00;
+  }
+
+  .badgeEstadoFoto.usado {
+    background: #e2f4e8;
+    color: var(--verde-cancha);
+  }
+
   .listaCarga {
     display: flex;
     gap: 14px;
@@ -908,6 +997,22 @@
       <div class="listaCarga" id="listaCarga"></div>
     </div>
 
+    <div class="toolbar">
+      <h2>📸 Fotos del equipo</h2>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <select id="filtroEstadoFoto" onchange="pintarListaFotos()" style="padding:8px 12px; border-radius:8px; border:1.5px solid var(--gris-linea); font-size:13px;">
+          <option value="">Todos</option>
+          <option value="pendiente">🟡 Pendientes</option>
+          <option value="usado">✅ Usados</option>
+        </select>
+        <button class="btnNuevaTarea" onclick="abrirModalNuevoLink()">+ Agregar link</button>
+      </div>
+    </div>
+
+    <div class="panelFotos" id="panelFotos">
+      <div id="listaLinksFotos" class="listaLinksFotos"></div>
+    </div>
+
     <div class="toolbar" id="toolbarTareas">
       <h2>Tareas del equipo</h2>
       <div style="display:flex; gap:10px; align-items:center;">
@@ -1105,6 +1210,29 @@
   </div>
 </div>
 
+<!-- ===================== MODAL AGREGAR LINK DE FOTOS ===================== -->
+<div class="overlay" id="overlayLinkFoto">
+  <div class="modal" style="max-width:420px;">
+    <h3>📸 Agregar link de fotos</h3>
+    <div class="campo">
+      <label>Link de Google Drive</label>
+      <input type="url" id="linkFotoUrl" placeholder="https://drive.google.com/...">
+    </div>
+    <div class="campo">
+      <label>Descripción</label>
+      <input type="text" id="linkFotoDescripcion" placeholder="ej. Partido vs Rival, cancha Municipal">
+    </div>
+    <div class="campo">
+      <label>Fecha del evento</label>
+      <input type="date" id="linkFotoFecha">
+    </div>
+    <div class="accionesModal">
+      <button class="btnSecundario" onclick="cerrarModalNuevoLink()">Cancelar</button>
+      <button class="btnPrimario" onclick="guardarLinkFoto()">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -1174,6 +1302,7 @@ function inicialesDe(nombre) {
 let usuarioActual = null;   // { id, nombre, usuario, rol, color }
 let usuariosCache = {};     // id -> datos usuario (para pintar avatares/nombres)
 let tareasCache = {};       // id -> datos tarea
+let linksFotosCache = {};   // id -> datos del link de fotos
 let checklistTemporal = []; // items del checklist mientras se edita una tarea
 let tareaEditandoId = null;
 
@@ -1292,6 +1421,7 @@ async function mostrarApp() {
 
   await cargarUsuarios();
   escucharTareasEnTiempoReal();
+  escucharLinksFotosEnTiempoReal();
   cargarProximosEventos();
   registrarServiceWorkerPWA();
 }
@@ -2236,6 +2366,131 @@ function aplicarFiltroResumen(tipo) {
     toolbar.style.background = '#fff1de';
     setTimeout(() => { toolbar.style.background = 'var(--blanco)'; }, 1200);
   }
+}
+
+// ===================== LINKS DE FOTOS =====================
+
+function escucharLinksFotosEnTiempoReal() {
+  const { collection, onSnapshot } = window._fs;
+  onSnapshot(collection(window._db, 'linksFotos'), (snap) => {
+    linksFotosCache = {};
+    snap.forEach(docSnap => {
+      linksFotosCache[docSnap.id] = { id: docSnap.id, ...docSnap.data() };
+    });
+    pintarListaFotos();
+  }, (error) => {
+    console.error('Error escuchando links de fotos:', error);
+  });
+}
+
+function pintarListaFotos() {
+  const contenedor = document.getElementById('listaLinksFotos');
+  if (!contenedor) return;
+
+  const filtroEstado = document.getElementById('filtroEstadoFoto')?.value || '';
+
+  let lista = Object.values(linksFotosCache);
+  if (filtroEstado) {
+    lista = lista.filter(l => l.estado === filtroEstado);
+  }
+
+  // Más recientes primero (por fecha del evento)
+  lista.sort((a, b) => {
+    const fa = a.fecha?.toDate ? a.fecha.toDate() : new Date(a.fecha || 0);
+    const fb = b.fecha?.toDate ? b.fecha.toDate() : new Date(b.fecha || 0);
+    return fb - fa;
+  });
+
+  if (lista.length === 0) {
+    contenedor.innerHTML = '<div class="vacioColumna">No hay links guardados todavía</div>';
+    return;
+  }
+
+  contenedor.innerHTML = '';
+
+  lista.forEach(link => {
+    const fecha = link.fecha?.toDate ? link.fecha.toDate() : new Date(link.fecha);
+    const fechaTexto = fecha.toLocaleDateString('es-PE', { day: '2-digit', month: 'short' });
+    const esUsado = link.estado === 'usado';
+
+    const ficha = document.createElement('div');
+    ficha.className = `fichaLinkFoto ${esUsado ? 'usado' : ''}`;
+
+    const metaTexto = esUsado && link.marcadoPorNombre
+      ? `Agregado por ${link.creadoPorNombre || '—'} · Marcado usado por ${link.marcadoPorNombre}`
+      : `Agregado por ${link.creadoPorNombre || '—'}`;
+
+    ficha.innerHTML = `
+      <span class="fechaLinkFoto">${fechaTexto}</span>
+      <div class="infoLinkFoto">
+        <div class="descripcionLinkFoto">${escaparHtml(link.descripcion || '(sin descripción)')}</div>
+        <div class="metaLinkFoto">${escaparHtml(metaTexto)}</div>
+      </div>
+      <a class="abrirLinkFoto" href="${escaparHtml(link.link)}" target="_blank" rel="noopener noreferrer">Abrir 📂</a>
+      <button type="button" class="badgeEstadoFoto ${esUsado ? 'usado' : 'pendiente'}" onclick="toggleEstadoLinkFoto('${link.id}')">
+        ${esUsado ? '✅ Usado' : '🟡 Pendiente'}
+      </button>
+    `;
+    contenedor.appendChild(ficha);
+  });
+}
+
+function abrirModalNuevoLink() {
+  document.getElementById('linkFotoUrl').value = '';
+  document.getElementById('linkFotoDescripcion').value = '';
+  document.getElementById('linkFotoFecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('overlayLinkFoto').classList.add('visible');
+}
+
+function cerrarModalNuevoLink() {
+  document.getElementById('overlayLinkFoto').classList.remove('visible');
+}
+
+async function guardarLinkFoto() {
+  const url = document.getElementById('linkFotoUrl').value.trim();
+  const descripcion = document.getElementById('linkFotoDescripcion').value.trim();
+  const fechaStr = document.getElementById('linkFotoFecha').value;
+
+  if (!url || !fechaStr) {
+    alert('Completa el link y la fecha.');
+    return;
+  }
+
+  const { collection, addDoc, serverTimestamp } = window._fs;
+
+  try {
+    await addDoc(collection(window._db, 'linksFotos'), {
+      link: url,
+      descripcion,
+      fecha: new Date(fechaStr + 'T00:00:00'),
+      estado: 'pendiente',
+      creadoPorNombre: usuarioActual.nombre,
+      creadoEn: serverTimestamp()
+    });
+    cerrarModalNuevoLink();
+  } catch (error) {
+    console.error(error);
+    alert('Hubo un error al guardar el link.');
+  }
+}
+
+async function toggleEstadoLinkFoto(linkId) {
+  const link = linksFotosCache[linkId];
+  if (!link) return;
+
+  const { doc, updateDoc, serverTimestamp } = window._fs;
+  const nuevoEstado = link.estado === 'usado' ? 'pendiente' : 'usado';
+
+  const cambios = { estado: nuevoEstado };
+  if (nuevoEstado === 'usado') {
+    cambios.marcadoPorNombre = usuarioActual.nombre;
+    cambios.marcadoEn = serverTimestamp();
+  } else {
+    cambios.marcadoPorNombre = null;
+    cambios.marcadoEn = null;
+  }
+
+  await updateDoc(doc(window._db, 'linksFotos', linkId), cambios);
 }
 </script>
 
