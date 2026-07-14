@@ -31,3 +31,10 @@ jobs:
           GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
           CALENDAR_ID_TAREAS: ${{ secrets.CALENDAR_ID_TAREAS }}
           CALENDAR_ID_FECHAS: ${{ secrets.CALENDAR_ID_FECHAS }}
+
+      - name: Sincronizar links de fotos con Google Sheets
+        run: node sync-sheets.js
+        working-directory: ./scripts
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          SHEET_ID_FOTOS: ${{ secrets.SHEET_ID_FOTOS }}
