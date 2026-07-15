@@ -251,6 +251,39 @@
 
   .toolbar h2 { font-size: 18px; color: var(--texto); }
 
+  /* ---------- SECCIÓN UNIFICADA (título + contenido en una sola tarjeta) ---------- */
+  .seccionUnificada {
+    background: var(--blanco);
+    border-radius: var(--radio);
+    border: 1.5px solid var(--gris-linea);
+    padding: 16px 18px;
+    margin-bottom: 20px;
+  }
+
+  .seccionUnificada .toolbarInterna {
+    background: none;
+    border: none;
+    padding: 0 0 14px 0;
+    margin-bottom: 14px;
+    border-bottom: 1.5px solid var(--gris-linea);
+  }
+
+  .btnVerMas {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    padding: 9px;
+    background: var(--gris-fondo);
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--vino-chankas);
+    cursor: pointer;
+  }
+
+  .btnVerMas:hover { background: var(--gris-linea); }
+
   /* ---------- PANEL CALENDARIO ---------- */
   .panelCalendario {
     background: var(--blanco);
@@ -725,6 +758,37 @@
     color: var(--texto-suave);
   }
 
+  .btnAccionRapida {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    padding: 8px;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .btnAccionRapida.completar {
+    background: #e2f4e8;
+    color: var(--verde-cancha);
+  }
+
+  .btnAccionRapida.completar:hover {
+    background: var(--verde-cancha);
+    color: white;
+  }
+
+  .btnAccionRapida.reabrir {
+    background: var(--gris-fondo);
+    color: var(--texto-suave);
+  }
+
+  .btnAccionRapida.reabrir:hover {
+    background: var(--gris-linea);
+  }
+
   .fechaLimite {
     display: flex;
     align-items: center;
@@ -937,6 +1001,10 @@
   </header>
 
   <main>
+    <div style="display:flex; justify-content:flex-end; margin-bottom:8px;">
+      <button type="button" class="btnSecundario" style="width:auto; padding:6px 12px; font-size:12px;" onclick="abrirModalCarga()">👥 Carga por persona</button>
+    </div>
+
     <div class="panelResumen" id="panelResumen">
       <div class="fichaResumen" onclick="aplicarFiltroResumen('pendientes')">
         <span class="numeroResumen" id="resumenPendientes">0</span>
@@ -992,52 +1060,51 @@
       </div>
     </div>
 
-    <div class="panelCarga" id="panelCarga">
-      <h3>👥 Carga por persona <span style="font-weight:400; color:var(--texto-suave); font-size:11px;">(clic para filtrar sus tareas)</span></h3>
-      <div class="listaCarga" id="listaCarga"></div>
-    </div>
-
-    <div class="toolbar">
-      <h2>📸 Fotos del equipo</h2>
-      <div style="display:flex; gap:10px; align-items:center;">
-        <select id="filtroEstadoFoto" onchange="pintarListaFotos()" style="padding:8px 12px; border-radius:8px; border:1.5px solid var(--gris-linea); font-size:13px;">
-          <option value="">Todos</option>
-          <option value="pendiente">🟡 Pendientes</option>
-          <option value="usado">✅ Usados</option>
-        </select>
-        <button class="btnNuevaTarea" onclick="abrirModalNuevoLink()">+ Agregar link</button>
+    <div class="seccionUnificada">
+      <div class="toolbar toolbarInterna">
+        <h2>📸 Fotos del equipo</h2>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <select id="filtroEstadoFoto" onchange="pintarListaFotos()" style="padding:8px 12px; border-radius:8px; border:1.5px solid var(--gris-linea); font-size:13px;">
+            <option value="">Todos</option>
+            <option value="pendiente">🟡 Pendientes</option>
+            <option value="usado">✅ Usados</option>
+          </select>
+          <a href="https://docs.google.com/spreadsheets/d/1OX2BRGfJqBtMqV8oK89vvwENr_ll5h8MPilr7JEb0CY/edit" target="_blank" rel="noopener noreferrer" class="btnSecundario" style="width:auto; padding:8px 14px; font-size:13px; text-decoration:none; display:inline-flex; align-items:center;">📊 Ver consolidado</a>
+          <button class="btnNuevaTarea" onclick="abrirModalNuevoLink()">+ Agregar link</button>
+        </div>
       </div>
-    </div>
 
-    <div class="panelFotos" id="panelFotos">
       <div id="listaLinksFotos" class="listaLinksFotos"></div>
+      <button type="button" class="btnVerMas" id="btnVerMasFotos" style="display:none;" onclick="alternarVerMasFotos()">Ver más ▾</button>
     </div>
 
-    <div class="toolbar" id="toolbarTareas">
-      <h2>Tareas del equipo</h2>
-      <div style="display:flex; gap:10px; align-items:center;">
-        <select id="filtroUsuario" onchange="pintarKanban()" style="padding:8px 12px; border-radius:8px; border:1.5px solid var(--gris-linea); font-size:13px;">
-          <option value="">Todos los usuarios</option>
-        </select>
-        <button class="btnNuevaTarea" onclick="abrirModalNuevaTarea()">+ Nueva tarea</button>
-      </div>
-    </div>
-
-    <div class="kanban">
-      <div class="columna" data-estado="pendiente">
-        <div class="columnaHeader">
-          <h3>Pendiente</h3>
-          <span class="contador" id="contador-pendiente">0</span>
+    <div class="seccionUnificada">
+      <div class="toolbar toolbarInterna" id="toolbarTareas">
+        <h2>Tareas del equipo</h2>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <select id="filtroUsuario" onchange="pintarKanban()" style="padding:8px 12px; border-radius:8px; border:1.5px solid var(--gris-linea); font-size:13px;">
+            <option value="">Todos los usuarios</option>
+          </select>
+          <button class="btnNuevaTarea" onclick="abrirModalNuevaTarea()">+ Nueva tarea</button>
         </div>
-        <div class="listaTarjetas" id="lista-pendiente" data-estado="pendiente"></div>
       </div>
 
-      <div class="columna" data-estado="completada">
-        <div class="columnaHeader">
-          <h3>Completada</h3>
-          <span class="contador" id="contador-completada">0</span>
+      <div class="kanban">
+        <div class="columna" data-estado="pendiente">
+          <div class="columnaHeader">
+            <h3>Pendiente</h3>
+            <span class="contador" id="contador-pendiente">0</span>
+          </div>
+          <div class="listaTarjetas" id="lista-pendiente" data-estado="pendiente"></div>
         </div>
-        <div class="listaTarjetas" id="lista-completada" data-estado="completada"></div>
+
+        <div class="columna" data-estado="completada">
+          <div class="columnaHeader">
+            <h3>Completada</h3>
+            <span class="contador" id="contador-completada">0</span>
+          </div>
+          <div class="listaTarjetas" id="lista-completada" data-estado="completada"></div>
+        </div>
       </div>
     </div>
   </main>
@@ -1220,7 +1287,7 @@
     </div>
     <div class="campo">
       <label>Descripción</label>
-      <input type="text" id="linkFotoDescripcion" placeholder="ej. Partido vs Rival, cancha Municipal">
+      <input type="text" id="linkFotoDescripcion" placeholder="ej. Entrenamento + Fecha">
     </div>
     <div class="campo">
       <label>Fecha del evento</label>
@@ -1229,6 +1296,18 @@
     <div class="accionesModal">
       <button class="btnSecundario" onclick="cerrarModalNuevoLink()">Cancelar</button>
       <button class="btnPrimario" onclick="guardarLinkFoto()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL CARGA POR PERSONA ===================== -->
+<div class="overlay" id="overlayCarga">
+  <div class="modal" style="max-width:400px;">
+    <h3>👥 Carga por persona</h3>
+    <p style="font-size:12px; color:var(--texto-suave); margin-bottom:14px;">Toca a alguien para ver solo sus tareas</p>
+    <div class="listaCarga" id="listaCargaPopup"></div>
+    <div class="accionesModal">
+      <button class="btnSecundario" style="flex:1;" onclick="cerrarModalCarga()">Cerrar</button>
     </div>
   </div>
 </div>
@@ -1530,7 +1609,6 @@ function pintarKanban() {
     });
   });
 
-  pintarCargaPorPersona();
   pintarResumen();
 }
 
@@ -1558,12 +1636,20 @@ function pintarResumen() {
   document.getElementById('resumenPorVencer').textContent = porVencer;
 }
 
-function pintarCargaPorPersona() {
-  const cont = document.getElementById('listaCarga');
+function abrirModalCarga() {
+  pintarCargaPopup();
+  document.getElementById('overlayCarga').classList.add('visible');
+}
+
+function cerrarModalCarga() {
+  document.getElementById('overlayCarga').classList.remove('visible');
+}
+
+function pintarCargaPopup() {
+  const cont = document.getElementById('listaCargaPopup');
   if (!cont) return;
   cont.innerHTML = '';
 
-  // Contamos solo tareas activas (no completadas) por usuario
   const conteoPorUsuario = {};
   Object.values(tareasCache).forEach(t => {
     if (t.estado === 'completada') return;
@@ -1584,12 +1670,13 @@ function pintarCargaPorPersona() {
     const ficha = document.createElement('div');
     ficha.className = 'fichaCarga';
     ficha.style.cursor = 'pointer';
-    ficha.title = `Ver solo las tareas de ${u.nombre}`;
+    ficha.style.width = '100%';
     ficha.onclick = () => {
       document.getElementById('filtroUsuario').value = u.id;
       filtroResumenActivo = null;
       document.getElementById('avisoFiltroResumen').style.display = 'none';
       pintarKanban();
+      cerrarModalCarga();
       const toolbar = document.getElementById('toolbarTareas');
       toolbar.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
@@ -1637,6 +1724,7 @@ function crearTarjetaTarea(tarea) {
   }
 
   const iconoPrioridad = { alta: '🔴', media: '🟡', baja: '⚪' }[tarea.prioridad || 'media'];
+  const esCompletada = tarea.estado === 'completada';
 
   div.innerHTML = `
     <div class="tarjetaTop">
@@ -1650,7 +1738,17 @@ function crearTarjetaTarea(tarea) {
     <div class="tarjetaMeta">
       <span class="fechaLimite ${claseFecha}">📅 ${textoFecha || 'Sin fecha'}</span>
     </div>
+    <button type="button" class="btnAccionRapida ${esCompletada ? 'reabrir' : 'completar'}" data-tarea-id="${tarea.id}">
+      ${esCompletada ? '↩ Reabrir' : '✓ Marcar completada'}
+    </button>
   `;
+
+  // El botón de acción rápida no debe abrir el modal de edición al hacer clic
+  div.querySelector('.btnAccionRapida').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const nuevoEstado = esCompletada ? 'pendiente' : 'completada';
+    cambiarEstadoTarea(tarea.id, nuevoEstado);
+  });
 
   return div;
 }
@@ -2383,8 +2481,11 @@ function escucharLinksFotosEnTiempoReal() {
   });
 }
 
+let fotosExpandidas = false;
+
 function pintarListaFotos() {
   const contenedor = document.getElementById('listaLinksFotos');
+  const btnVerMas = document.getElementById('btnVerMasFotos');
   if (!contenedor) return;
 
   const filtroEstado = document.getElementById('filtroEstadoFoto')?.value || '';
@@ -2403,12 +2504,17 @@ function pintarListaFotos() {
 
   if (lista.length === 0) {
     contenedor.innerHTML = '<div class="vacioColumna">No hay links guardados todavía</div>';
+    btnVerMas.style.display = 'none';
     return;
   }
 
+  const LIMITE = 10;
+  const hayMasDeLimite = lista.length > LIMITE;
+  const listaAMostrar = fotosExpandidas ? lista : lista.slice(0, LIMITE);
+
   contenedor.innerHTML = '';
 
-  lista.forEach(link => {
+  listaAMostrar.forEach(link => {
     const fecha = link.fecha?.toDate ? link.fecha.toDate() : new Date(link.fecha);
     const fechaTexto = fecha.toLocaleDateString('es-PE', { day: '2-digit', month: 'short' });
     const esUsado = link.estado === 'usado';
@@ -2433,6 +2539,18 @@ function pintarListaFotos() {
     `;
     contenedor.appendChild(ficha);
   });
+
+  if (hayMasDeLimite) {
+    btnVerMas.style.display = 'block';
+    btnVerMas.textContent = fotosExpandidas ? 'Ver menos ▴' : `Ver ${lista.length - LIMITE} más ▾`;
+  } else {
+    btnVerMas.style.display = 'none';
+  }
+}
+
+function alternarVerMasFotos() {
+  fotosExpandidas = !fotosExpandidas;
+  pintarListaFotos();
 }
 
 function abrirModalNuevoLink() {
